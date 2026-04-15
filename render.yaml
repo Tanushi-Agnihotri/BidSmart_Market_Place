@@ -1,0 +1,51 @@
+# ============================================================================
+# Render deployment config
+# Database is hosted externally on Aiven (not Render-managed) — so no
+# `databases:` block here. DB credentials below point at the Aiven instance.
+# ============================================================================
+
+services:
+  # Spring Boot Backend
+  - type: web
+    name: bidsmart-backend
+    runtime: docker
+    rootDir: BidSmart Backend
+    dockerfilePath: ./Dockerfile
+    plan: free
+    envVars:
+      - key: SERVER_PORT
+        value: 8081
+      # --- Aiven Postgres ---
+      - key: DB_HOST
+        value: bidsmart-1-tanushiagni-2777.i.aivencloud.com
+      - key: DB_PORT
+        value: "17051"
+      - key: DB_NAME
+        value: defaultdb
+      - key: DB_USERNAME
+        value: avnadmin
+      - key: DB_PASSWORD
+        sync: false   # set the real value in the Render dashboard (kept out of git)
+      # Aiven requires SSL for external connections.
+      - key: DB_URL_PARAMS
+        value: "?sslmode=require"
+      # --- App config ---
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRATION_MS
+        value: "2592000000"
+      - key: UPLOAD_DIR
+        value: /app/uploads
+      - key: FRONTEND_URL
+        value: https://bidsmart-frontend.onrender.com
+
+  # React Frontend (nginx)
+  - type: web
+    name: bidsmart-frontend
+    runtime: docker
+    rootDir: BidSmart Frontend
+    dockerfilePath: ./Dockerfile
+    plan: free
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://bidsmart-backend.onrender.com
