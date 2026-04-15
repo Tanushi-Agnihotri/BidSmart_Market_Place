@@ -16,6 +16,8 @@ const Navbar = () => {
   const isScrolled = scrolled || !isHomePage;
   const authRoutes = ['/login', '/register', '/forgot-password', '/reset-password'];
   const isAuthRoute = authRoutes.includes(location.pathname);
+  const hideNavbarRoutes = ['/login', '/register'];
+  const shouldHideNavbar = hideNavbarRoutes.includes(location.pathname);
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 20);
@@ -94,6 +96,10 @@ const Navbar = () => {
       </div>
     </div>
   );
+
+  if (shouldHideNavbar) {
+    return null;
+  }
 
   if (isAuthRoute) {
     return (
