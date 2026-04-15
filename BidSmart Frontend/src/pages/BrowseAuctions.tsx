@@ -179,8 +179,6 @@ const BrowseAuctions = () => {
       {/* Main content area */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-dot-pattern opacity-30" />
-        <div className="absolute top-20 right-0 w-80 h-80 rounded-full bg-primary/5 blur-3xl pointer-events-none" />
-        <div className="absolute bottom-40 left-0 w-72 h-72 rounded-full bg-accent/5 blur-3xl pointer-events-none" />
 
         <div className="container mx-auto px-4 py-6 relative z-10">
           {/* Always-visible category strip */}
@@ -300,7 +298,6 @@ const BrowseAuctions = () => {
             <div className="relative overflow-hidden rounded-3xl p-[1px] bg-gradient-to-br from-primary/30 via-border to-border shadow-card mb-10">
               <div className="relative rounded-3xl bg-card/90 backdrop-blur-sm px-6 py-16 text-center">
                 <div className="relative inline-flex items-center justify-center mb-5">
-                  <div className="absolute inset-0 rounded-2xl bg-primary/20 blur-2xl" />
                   <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/30">
                     <Search className="h-8 w-8 text-primary" />
                   </div>

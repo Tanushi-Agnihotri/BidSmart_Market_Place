@@ -35,14 +35,12 @@ const SellerAccessGate = ({ feature, description }: SellerAccessGateProps) => {
       {/* Decorative background */}
       <div className="pointer-events-none absolute inset-0 bg-floating-orbs opacity-60" />
       <div className="pointer-events-none absolute inset-0 bg-lines-pattern opacity-30" />
-      <div className="pointer-events-none absolute top-20 left-1/2 h-80 w-80 -translate-x-1/2 rounded-full bg-primary/20 blur-3xl" />
 
       <div className="relative container mx-auto px-4 max-w-2xl">
         <div className="relative overflow-hidden rounded-3xl p-[1px] bg-gradient-to-br from-primary/50 via-primary/20 to-border shadow-card">
           <div className="relative rounded-3xl bg-card/90 backdrop-blur-sm p-8 md:p-10 text-center">
             {/* Glowing icon */}
             <div className="relative inline-flex items-center justify-center mb-5">
-              <div className="absolute inset-0 rounded-2xl bg-primary/30 blur-2xl" />
               <div className="relative flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/25 to-primary/5 border border-primary/30 shadow-lg">
                 <Storefront className="h-10 w-10 text-primary" />
               </div>

@@ -67,7 +67,6 @@ const Cookies = () => (
     {/* Decorative background */}
     <div className="pointer-events-none absolute inset-0 bg-floating-orbs opacity-60" />
     <div className="pointer-events-none absolute inset-0 bg-lines-pattern opacity-30" />
-    <div className="pointer-events-none absolute top-32 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-primary/20 blur-3xl" />
 
     <div className="relative container mx-auto px-4 max-w-6xl">
       <Link
@@ -81,7 +80,6 @@ const Cookies = () => (
       <div className="relative text-center mb-10">
         <div className="inline-flex items-center justify-center mb-5">
           <div className="relative">
-            <div className="absolute inset-0 rounded-2xl bg-primary/30 blur-xl" />
             <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/30 shadow-lg">
               <MdOutlineCookie className="h-8 w-8 text-primary" />
             </div>
@@ -127,7 +125,6 @@ const Cookies = () => (
                 className={`group relative overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-card hover:shadow-lg hover:-translate-y-0.5 transition-all`}
               >
                 <div className={`absolute inset-x-0 -top-px h-px bg-gradient-to-r ${c.accent}`} />
-                <div className={`absolute -right-8 -top-8 h-24 w-24 rounded-full bg-gradient-to-br ${c.accent} blur-2xl opacity-60 group-hover:opacity-100 transition-opacity`} />
 
                 <div className="relative">
                   <div className={`inline-flex h-10 w-10 items-center justify-center rounded-xl ${c.iconBg} mb-3`}>

@@ -52,7 +52,6 @@ const Terms = () => (
   <div className="relative min-h-screen overflow-hidden pt-24 pb-20 animate-fade-in">
     <div className="pointer-events-none absolute inset-0 bg-floating-orbs opacity-60" />
     <div className="pointer-events-none absolute inset-0 bg-lines-pattern opacity-30" />
-    <div className="pointer-events-none absolute top-32 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-primary/20 blur-3xl" />
 
     <div className="relative container mx-auto px-4 max-w-6xl">
       <Link
@@ -65,7 +64,6 @@ const Terms = () => (
       <div className="relative text-center mb-10">
         <div className="inline-flex items-center justify-center mb-5">
           <div className="relative">
-            <div className="absolute inset-0 rounded-2xl bg-primary/30 blur-xl" />
             <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/30 shadow-lg">
               <MdOutlineDescription className="h-8 w-8 text-primary" />
             </div>

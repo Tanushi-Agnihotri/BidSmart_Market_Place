@@ -115,9 +115,6 @@ const BecomeSeller = () => {
 
         {/* Form Card */}
         <div className="bg-card border border-border rounded-3xl p-8 md:p-10 shadow-elegant card-glow relative overflow-hidden">
-          {/* Decorative background element */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
-          
           <form onSubmit={step === 3 ? handleSubmit : (e) => { e.preventDefault(); handleNext(); }} className="relative z-10">
             
             {/* Step 1: Store Details */}

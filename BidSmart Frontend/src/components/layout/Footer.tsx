@@ -6,16 +6,16 @@ const AUTH_ROUTES = ['/login', '/register', '/forgot-password', '/reset-password
 const Footer = () => {
   const location = useLocation();
   if (AUTH_ROUTES.includes(location.pathname)) return null;
+  const isHome = location.pathname === '/';
 
   return (
   <footer className="relative border-t border-border overflow-hidden">
     {/* Rich gradient background */}
     <div className="absolute inset-0 bg-gradient-to-b from-card via-card to-background" />
     <div className="absolute inset-0 bg-dot-pattern opacity-20" />
-    <div className="absolute top-0 left-1/4 w-96 h-96 rounded-full bg-primary/3 blur-3xl pointer-events-none" />
-    <div className="absolute bottom-0 right-1/4 w-80 h-80 rounded-full bg-accent/3 blur-3xl pointer-events-none" />
 
-    <div className="container mx-auto px-4 py-16 relative z-10">
+    <div className={`container mx-auto px-4 ${isHome ? 'py-16' : 'py-3'} relative z-10`}>
+      {isHome && (
       <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
         <div className="col-span-2 md:col-span-1">
           <Link to="/" className="flex items-center gap-2 mb-4 group">
@@ -42,25 +42,32 @@ const Footer = () => {
           </div>
         ))}
       </div>
+      )}
 
-      <div className="mt-12 flex flex-wrap justify-center gap-8 border-t border-border pt-8">
+      <div className={`${isHome ? 'mt-12 border-t border-border pt-8' : ''} flex flex-wrap justify-center gap-3 md:gap-4`}>
         {[
           { icon: MdOutlineSecurity, label: 'SSL Secured' },
           { icon: MdOutlineCheckCircle, label: 'Verified Sellers' },
           { icon: MdOutlineVerified, label: 'Money-back Guarantee' },
         ].map(({ icon: Icon, label }) => (
-          <div key={label} className="flex items-center gap-2 text-lg text-muted-foreground">
-            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary/10">
-              <Icon className="h-3.5 w-3.5 text-primary" />
+          <div
+            key={label}
+            className="group flex items-center gap-2 rounded-full border border-border/60 bg-card/60 backdrop-blur-sm px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm transition-all hover:border-primary/40 hover:text-foreground hover:shadow-md"
+          >
+            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-primary/5 ring-1 ring-primary/20 transition-colors group-hover:from-primary/30 group-hover:to-primary/10">
+              <Icon className="h-3 w-3 text-primary" />
             </div>
             {label}
           </div>
         ))}
       </div>
 
-      <p className="mt-8 text-center text-lg text-muted-foreground">
-        &copy; {new Date().getFullYear()} BidSmart. All rights reserved.
-      </p>
+      <div className={`${isHome ? 'mt-8 gap-2' : 'mt-2 gap-1'} flex flex-col items-center`}>
+        <div className="h-px w-20 bg-gradient-to-r from-transparent via-border to-transparent" />
+        <p className="text-center text-[11px] text-muted-foreground">
+          &copy; {new Date().getFullYear()} <span className="font-semibold gradient-gold-text">BidSmart</span>. All rights reserved.
+        </p>
+      </div>
     </div>
   </footer>
   );

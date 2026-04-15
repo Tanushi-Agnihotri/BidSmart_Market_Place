@@ -30,8 +30,6 @@ const Watchlist = () => {
       {/* Decorative background */}
       <div className="pointer-events-none absolute inset-0 bg-floating-orbs opacity-60" />
       <div className="pointer-events-none absolute inset-0 bg-lines-pattern opacity-30" />
-      <div className="pointer-events-none absolute -top-10 left-1/4 h-80 w-80 rounded-full bg-primary/20 blur-3xl" />
-      <div className="pointer-events-none absolute top-40 right-10 h-72 w-72 rounded-full bg-primary/10 blur-3xl" />
 
       <div className="relative container mx-auto px-4">
         {/* Hero header */}
@@ -40,7 +38,6 @@ const Watchlist = () => {
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
               <div className="flex items-start gap-4">
                 <div className="relative shrink-0">
-                  <div className="absolute inset-0 rounded-2xl bg-primary/30 blur-2xl" />
                   <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/25 to-primary/5 border border-primary/30 shadow-lg">
                     <Heart className="h-7 w-7 text-primary fill-primary/30" />
                   </div>
@@ -127,7 +124,6 @@ const Watchlist = () => {
             <div className="relative rounded-3xl bg-card/90 backdrop-blur-sm px-6 py-16 md:py-20 text-center">
               {/* Glowing sparkle */}
               <div className="relative inline-flex items-center justify-center mb-6">
-                <div className="absolute inset-0 rounded-2xl bg-primary/30 blur-2xl animate-pulse-glow" />
                 <div className="relative flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/25 to-primary/5 border border-primary/30 shadow-lg">
                   <Sparkle className="h-10 w-10 text-primary" />
                 </div>

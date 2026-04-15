@@ -276,9 +276,6 @@ const Login = () => {
       {/* Right Panel */}
       <div className="flex items-center justify-center p-6 sm:p-10 bg-background relative overflow-hidden">
         <div className="absolute inset-0 bg-dot-pattern opacity-30" />
-        <div className="absolute top-0 right-0 w-96 h-96 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full bg-accent/5 blur-3xl pointer-events-none" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-gradient-to-br from-primary/5 to-transparent blur-3xl pointer-events-none" />
 
         <div className="w-full max-w-md relative z-10 animate-float-up">
           <div className="glass-card rounded-3xl p-8 sm:p-10 shadow-[0_20px_60px_-20px_hsl(var(--foreground)/0.15)] border-primary/10">
