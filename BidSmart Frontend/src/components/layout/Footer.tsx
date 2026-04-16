@@ -18,29 +18,6 @@ const Footer = () => {
     <div className={`container mx-auto px-4 ${isHome ? 'py-1.5' : 'py-1.5'} relative z-10`}>
       {isHome && (
       <>
-        {/* Top CTA banner */}
-        <div className="relative mb-10 rounded-2xl overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-primary/10 to-primary/5 backdrop-blur-sm" />
-          <div className="absolute inset-0 border border-primary/20 rounded-2xl" />
-          <div className="relative flex flex-col md:flex-row items-center justify-between gap-5 px-8 py-6 md:py-7">
-            <div>
-              <h3 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-2">
-                Ready to Start Bidding?
-              </h3>
-              <p className="text-muted-foreground max-w-md">
-                Join thousands of collectors and discover extraordinary items at auction.
-              </p>
-            </div>
-            <Link
-              to="/auctions"
-              className="group inline-flex items-center gap-2 rounded-xl gradient-gold px-8 py-4 text-lg font-bold text-primary-foreground shadow-elegant transition-all hover:scale-[1.02] hover:shadow-lg shrink-0"
-            >
-              Explore Auctions
-              <MdOutlineArrowForward className="h-5 w-5 transition-transform group-hover:translate-x-1" />
-            </Link>
-          </div>
-        </div>
-
         {/* Main footer grid */}
         <div className="grid grid-cols-2 md:grid-cols-12 gap-8 md:gap-6">
           {/* Brand column */}
