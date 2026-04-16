@@ -17,7 +17,9 @@ import vehicleImg from '@/assets/auction-vehicle.jpg';
 
 const Landing = () => {
   const { auctions } = useApp();
-  const featured = auctions.filter(a => a.status === 'active' || a.status === 'ending-soon').slice(0, 6);
+  const featured = [...auctions]
+    .sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime())
+    .slice(0, 4);
 
   const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({});
   const [stats, setStats] = useState<ApiPublicStats | null>(null);
@@ -161,7 +163,7 @@ const Landing = () => {
               View All <MdOutlineArrowForward className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </Link>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {featured.map(a => <AuctionCard key={a.id} auction={a} />)}
           </div>
         </div>
