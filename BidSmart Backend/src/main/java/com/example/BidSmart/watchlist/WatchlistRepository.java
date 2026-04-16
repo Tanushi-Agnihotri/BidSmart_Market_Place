@@ -17,4 +17,6 @@ public interface WatchlistRepository extends JpaRepository<WatchlistItem, UUID> 
     int countByAuctionId(UUID auctionId);
 
     void deleteByAuctionId(UUID auctionId);
+
+    void deleteByUserId(UUID userId);
 }

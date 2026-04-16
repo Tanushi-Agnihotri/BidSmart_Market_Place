@@ -330,10 +330,19 @@ export const statsApi = {
 // Admin
 export const adminApi = {
   getStats: () => request<ApiDashboardStats>('/api/admin/dashboard/stats'),
+  getCharts: () => request<{
+    monthlyRevenue: { month: string; revenue: number }[];
+    dailyBids: { day: string; bids: number }[];
+    categoryData: { name: string; value: number }[];
+  }>('/api/admin/dashboard/charts'),
   getUsers: () => request<ApiAdminUser[]>('/api/admin/users'),
   updateUserStatus: (userId: string, status: 'ACTIVE' | 'SUSPENDED') =>
     request<ApiAdminUser>(`/api/admin/users/${userId}/status`, {
       method: 'PATCH',
       body: JSON.stringify({ status }),
     }),
+  deleteUser: (userId: string) =>
+    request<void>(`/api/admin/users/${userId}`, { method: 'DELETE' }),
+  deleteAuction: (auctionId: string) =>
+    request<void>(`/api/admin/auctions/${auctionId}`, { method: 'DELETE' }),
 };

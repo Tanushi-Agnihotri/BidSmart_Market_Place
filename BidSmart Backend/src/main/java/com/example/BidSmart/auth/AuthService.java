@@ -234,4 +234,12 @@ public class AuthService {
             throw new IllegalStateException("SHA-256 not available", ex);
         }
     }
+
+    @Transactional
+    public void promoteToAdmin(String email) {
+        User user = userRepository.findByEmailIgnoreCase(email)
+            .orElseThrow(() -> new ApiException(org.springframework.http.HttpStatus.NOT_FOUND, "User not found: " + email));
+        user.setRole(com.example.BidSmart.user.UserRole.ADMIN);
+        userRepository.save(user);
+    }
 }

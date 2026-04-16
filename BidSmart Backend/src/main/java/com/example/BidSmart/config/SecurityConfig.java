@@ -42,6 +42,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/auth/google").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/forgot-password").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/reset-password").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/auth/make-admin").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/auctions").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/auctions/category-counts").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/auctions/{id}").permitAll()

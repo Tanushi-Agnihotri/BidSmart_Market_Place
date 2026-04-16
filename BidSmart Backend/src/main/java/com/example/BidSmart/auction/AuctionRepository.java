@@ -27,10 +27,25 @@ public interface AuctionRepository extends JpaRepository<Auction, UUID>, JpaSpec
     @Query("SELECT COALESCE(SUM(a.currentBid), 0) FROM Auction a WHERE a.status = 'CLOSED' AND a.currentBid > 0")
     BigDecimal sumClosedAuctionRevenue();
 
+    @Query(value = """
+        SELECT TO_CHAR(DATE_TRUNC('month', end_time), 'Mon') AS month,
+               COALESCE(SUM(current_bid), 0) AS revenue
+        FROM auctions
+        WHERE status = 'CLOSED'
+          AND current_bid > 0
+          AND end_time >= NOW() - INTERVAL '6 months'
+        GROUP BY DATE_TRUNC('month', end_time)
+        ORDER BY DATE_TRUNC('month', end_time)
+        """, nativeQuery = true)
+    List<Object[]> getMonthlyRevenue();
+
     // For scheduler: find auctions that need status updates
     List<Auction> findByStatusAndEndTimeBefore(AuctionStatus status, OffsetDateTime time);
 
     List<Auction> findByStatusAndStartTimeBefore(AuctionStatus status, OffsetDateTime time);
 
     List<Auction> findByStatusAndEndTimeBetween(AuctionStatus status, OffsetDateTime from, OffsetDateTime to);
+
+    List<Auction> findBySellerId(UUID sellerId);
+    void deleteBySellerId(UUID sellerId);
 }

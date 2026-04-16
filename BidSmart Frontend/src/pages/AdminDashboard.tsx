@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { MdOutlinePeople as Users, MdOutlineGavel as Gavel, MdOutlineCurrencyRupee as RupeeSign, MdOutlineTrendingUp as TrendingUp, MdOutlineShield as Shield, MdOutlineBlock as Ban, MdOutlineCheckCircle as CheckCircle2, MdOutlineSearch as Search, MdOutlineMoreHoriz as MoreHorizontal } from 'react-icons/md';
+import { MdOutlinePeople as Users, MdOutlineGavel as Gavel, MdOutlineCurrencyRupee as RupeeSign, MdOutlineTrendingUp as TrendingUp, MdOutlineShield as Shield, MdOutlineBlock as Ban, MdOutlineCheckCircle as CheckCircle2, MdOutlineSearch as Search, MdOutlineMoreHoriz as MoreHorizontal, MdOutlineDelete as Trash } from 'react-icons/md';
 import { Link } from 'react-router-dom';
 import { AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useApp } from '@/context/AppContext';
@@ -12,36 +12,9 @@ import { Input } from '@/components/ui/input';
 import { mockUsers, type User } from '@/data/mockData';
 import { cn } from '@/lib/utils';
 import { adminApi, type ApiAdminUser, type ApiDashboardStats } from '@/lib/apiService';
-
-const revenueData = [
-  { month: 'Sep', revenue: 32000, fees: 3200 },
-  { month: 'Oct', revenue: 41000, fees: 4100 },
-  { month: 'Nov', revenue: 56000, fees: 5600 },
-  { month: 'Dec', revenue: 48000, fees: 4800 },
-  { month: 'Jan', revenue: 62000, fees: 6200 },
-  { month: 'Feb', revenue: 54000, fees: 5400 },
-  { month: 'Mar', revenue: 71000, fees: 7100 },
-];
-
-const categoryData = [
-  { name: 'Watches', value: 28 },
-  { name: 'Art', value: 22 },
-  { name: 'Vehicles', value: 15 },
-  { name: 'Fashion', value: 18 },
-  { name: 'Other', value: 17 },
-];
+import { toast } from '@/hooks/use-toast';
 
 const COLORS = ['hsl(42,50%,54%)', 'hsl(200,60%,50%)', 'hsl(150,50%,45%)', 'hsl(280,50%,55%)', 'hsl(0,0%,45%)'];
-
-const bidsPerDay = [
-  { day: 'Mon', bids: 42 },
-  { day: 'Tue', bids: 58 },
-  { day: 'Wed', bids: 35 },
-  { day: 'Thu', bids: 67 },
-  { day: 'Fri', bids: 89 },
-  { day: 'Sat', bids: 74 },
-  { day: 'Sun', bids: 51 },
-];
 
 const AdminDashboard = () => {
   const { auctions, bids, authToken, refreshAuctions } = useApp();
@@ -56,11 +29,17 @@ const AdminDashboard = () => {
   // API data
   const [apiStats, setApiStats] = useState<ApiDashboardStats | null>(null);
   const [apiUsers, setApiUsers] = useState<User[]>([]);
+  const [chartData, setChartData] = useState<{
+    monthlyRevenue: { month: string; revenue: number }[];
+    dailyBids: { day: string; bids: number }[];
+    categoryData: { name: string; value: number }[];
+  }>({ monthlyRevenue: [], dailyBids: [], categoryData: [] });
 
   useEffect(() => {
     if (!authToken) return;
     refreshAuctions();
     adminApi.getStats().then(setApiStats).catch(() => {});
+    adminApi.getCharts().then(setChartData).catch(() => {});
     adminApi.getUsers().then(users => {
       setApiUsers(users.map(u => ({
         id: u.id,
@@ -75,12 +54,76 @@ const AdminDashboard = () => {
     }).catch(() => {});
   }, [authToken, refreshAuctions]);
 
+  const [confirmDelete, setConfirmDelete] = useState<{ type: 'user' | 'auction'; id: string; name: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDeleteUser = async (userId: string) => {
+    setDeleting(true);
+    try {
+      await adminApi.deleteUser(userId);
+      setApiUsers(prev => prev.filter(u => u.id !== userId));
+      toast({ title: 'User deleted', description: 'User and all their data removed.' });
+    } catch {
+      toast({ title: 'Delete failed', variant: 'destructive' });
+    } finally {
+      setDeleting(false);
+      setConfirmDelete(null);
+    }
+  };
+
+  const handleDeleteAuction = async (auctionId: string) => {
+    setDeleting(true);
+    try {
+      await adminApi.deleteAuction(auctionId);
+      await refreshAuctions();
+      toast({ title: 'Auction deleted', description: 'Auction and all bids removed.' });
+    } catch {
+      toast({ title: 'Delete failed', variant: 'destructive' });
+    } finally {
+      setDeleting(false);
+      setConfirmDelete(null);
+    }
+  };
+
+  const handleSuspendUser = async (userId: string, currentStatus: string) => {
+    const newStatus = currentStatus === 'active' ? 'SUSPENDED' : 'ACTIVE';
+    try {
+      await adminApi.updateUserStatus(userId, newStatus);
+      setApiUsers(prev => prev.map(u => u.id === userId ? { ...u, status: newStatus === 'ACTIVE' ? 'active' : 'suspended' } : u));
+      toast({ title: `User ${newStatus === 'SUSPENDED' ? 'suspended' : 'reactivated'}` });
+    } catch {
+      toast({ title: 'Action failed', variant: 'destructive' });
+    }
+  };
+
   const allUsers = apiUsers.length > 0 ? apiUsers : mockUsers;
 
   const totalUsers = apiStats?.totalUsers ?? allUsers.length;
   const activeAuctions = apiStats?.activeAuctions ?? auctions.filter(a => a.status === 'active' || a.status === 'ending-soon').length;
-  const totalRevenue = apiStats?.totalRevenue ?? revenueData.reduce((s, d) => s + d.revenue, 0);
+  const totalRevenue = apiStats?.totalRevenue ?? 0;
   const totalBids = apiStats?.totalBids ?? bids.length;
+
+  // Pad monthly revenue to always show last 6 months (fill missing with 0)
+  const paddedMonthlyRevenue = useMemo(() => {
+    const now = new Date();
+    const months: { month: string; revenue: number }[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const label = d.toLocaleString('en-US', { month: 'short' });
+      const found = chartData.monthlyRevenue.find(m => m.month === label);
+      months.push({ month: label, revenue: Number(found?.revenue ?? 0) });
+    }
+    return months;
+  }, [chartData.monthlyRevenue]);
+
+  // Pad daily bids to always show Mon-Sun (fill missing with 0)
+  const paddedDailyBids = useMemo(() => {
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    return days.map(day => {
+      const found = chartData.dailyBids.find(d => d.day === day);
+      return { day, bids: Number(found?.bids ?? 0) };
+    });
+  }, [chartData.dailyBids]);
 
   const filteredUsers = useMemo(() => {
     const q = debouncedUserSearch.toLowerCase();
@@ -124,21 +167,47 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen pt-24 pb-20 animate-fade-in">
-      <div className="container mx-auto px-4">
-        <div className="mb-8">
-          <h1 className="font-display text-3xl font-bold flex items-center gap-3">
-            <Shield className="h-7 w-7 text-primary" /> Admin Dashboard
-          </h1>
-          <p className="text-muted-foreground mt-1">Platform overview and management</p>
+    <div className="min-h-screen pt-20 pb-20 animate-fade-in">
+      <div className="container mx-auto px-6 lg:px-10">
+
+        {/* Hero Header */}
+        <div className="animate-float-up mb-8">
+          <div className="rounded-3xl border border-border bg-card shadow-card p-6 md:p-8">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+              <div className="flex items-start gap-4">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 border border-primary/20 shrink-0">
+                  <Shield className="h-7 w-7 text-primary" />
+                </div>
+                <div>
+                  <span className="inline-block text-xs font-semibold uppercase tracking-[0.2em] text-primary mb-1">
+                    Admin Zone
+                  </span>
+                  <h1 className="font-display text-4xl font-bold tracking-tight">
+                    Admin Dashboard
+                  </h1>
+                  <p className="text-sm md:text-base text-muted-foreground mt-1">
+                    Platform overview and management tools
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <StatsCard icon={Users} label="Total Users" value={String(totalUsers)} />
-          <StatsCard icon={Gavel} label="Active Auctions" value={String(activeAuctions)} />
-          <StatsCard icon={RupeeSign} label="Total Revenue" value={`₹${(totalRevenue / 1000).toFixed(0)}k`} />
-          <StatsCard icon={TrendingUp} label="Total Bids" value={String(totalBids)} />
+          <div className="animate-float-up" style={{ animationDelay: '100ms' }}>
+            <StatsCard icon={Users} label="Total Users" value={String(totalUsers)} />
+          </div>
+          <div className="animate-float-up" style={{ animationDelay: '200ms' }}>
+            <StatsCard icon={Gavel} label="Active Auctions" value={String(activeAuctions)} />
+          </div>
+          <div className="animate-float-up" style={{ animationDelay: '300ms' }}>
+            <StatsCard icon={RupeeSign} label="Total Revenue" value={`₹${(totalRevenue / 1000).toFixed(0)}k`} />
+          </div>
+          <div className="animate-float-up" style={{ animationDelay: '400ms' }}>
+            <StatsCard icon={TrendingUp} label="Total Bids" value={String(totalBids)} />
+          </div>
         </div>
 
         {/* Charts */}
@@ -146,7 +215,7 @@ const AdminDashboard = () => {
           <div className="lg:col-span-2 rounded-2xl border border-border bg-card p-6">
             <h2 className="font-display text-lg font-semibold mb-4">Revenue & Fees</h2>
             <ResponsiveContainer width="100%" height={260}>
-              <AreaChart data={revenueData}>
+              <AreaChart data={paddedMonthlyRevenue}>
                 <defs>
                   <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="hsl(42,50%,54%)" stopOpacity={0.3} />
@@ -161,29 +230,39 @@ const AdminDashboard = () => {
                   formatter={(v: number) => [`₹${v.toLocaleString()}`, '']}
                 />
                 <Area type="monotone" dataKey="revenue" stroke="hsl(42,50%,54%)" fill="url(#revGrad)" strokeWidth={2} name="Revenue" />
-                <Area type="monotone" dataKey="fees" stroke="hsl(200,60%,50%)" fill="transparent" strokeWidth={2} strokeDasharray="5 5" name="Fees" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
 
           <div className="rounded-2xl border border-border bg-card p-6">
             <h2 className="font-display text-lg font-semibold mb-4">Auctions by Category</h2>
-            <ResponsiveContainer width="100%" height={180}>
-              <PieChart>
-                <Pie data={categoryData} cx="50%" cy="50%" innerRadius={50} outerRadius={75} paddingAngle={3} dataKey="value">
-                  {categoryData.map((_, i) => <Cell key={i} fill={COLORS[i]} />)}
-                </Pie>
-                <Tooltip contentStyle={{ background: 'hsl(222,30%,12%)', border: '1px solid hsl(222,20%,20%)', borderRadius: 12, fontSize: 13 }} />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="flex flex-wrap gap-2 mt-2 justify-center">
-              {categoryData.map((c, i) => (
-                <span key={c.name} className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <span className="h-2.5 w-2.5 rounded-full" style={{ background: COLORS[i] }} />
-                  {c.name}
-                </span>
-              ))}
-            </div>
+            {chartData.categoryData.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-[180px] text-center">
+                <div className="h-14 w-14 rounded-full bg-muted/40 flex items-center justify-center mb-2">
+                  <Gavel className="h-6 w-6 text-muted-foreground" />
+                </div>
+                <p className="text-sm text-muted-foreground">No active auctions yet</p>
+              </div>
+            ) : (
+              <>
+                <ResponsiveContainer width="100%" height={180}>
+                  <PieChart>
+                    <Pie data={chartData.categoryData} cx="50%" cy="50%" innerRadius={50} outerRadius={75} paddingAngle={3} dataKey="value">
+                      {chartData.categoryData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                    </Pie>
+                    <Tooltip contentStyle={{ background: 'hsl(222,30%,12%)', border: '1px solid hsl(222,20%,20%)', borderRadius: 12, fontSize: 13 }} />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="flex flex-wrap gap-2 mt-2 justify-center">
+                  {chartData.categoryData.map((c, i) => (
+                    <span key={c.name} className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                      <span className="h-2.5 w-2.5 rounded-full" style={{ background: COLORS[i % COLORS.length] }} />
+                      {c.name}
+                    </span>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         </div>
 
@@ -191,7 +270,7 @@ const AdminDashboard = () => {
         <div className="rounded-2xl border border-border bg-card p-6 mb-10">
           <h2 className="font-display text-lg font-semibold mb-4">Bidding Activity (This Week)</h2>
           <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={bidsPerDay}>
+            <BarChart data={paddedDailyBids}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(220,20%,20%)" />
               <XAxis dataKey="day" tick={{ fill: 'hsl(220,10%,50%)', fontSize: 12 }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fill: 'hsl(220,10%,50%)', fontSize: 12 }} axisLine={false} tickLine={false} />
@@ -228,13 +307,13 @@ const AdminDashboard = () => {
               <div className="overflow-x-auto">
                 <table className="w-full text-base">
                   <thead>
-                    <tr className="border-b border-border text-muted-foreground">
-                      <th className="px-5 py-3 text-left">
+                    <tr className="border-b border-border">
+                      <th className="px-5 py-3 text-left text-xs uppercase tracking-wider text-muted-foreground">
                         <SortableHeader label="User" sortKey="name" currentSort={userSort.sortKey} currentDirection={userSort.sortDir} onSort={userSort.onSort} />
                       </th>
-                      <th className="px-5 py-3 text-left font-medium">Role</th>
-                      <th className="px-5 py-3 text-left font-medium">Status</th>
-                      <th className="px-5 py-3 text-left">
+                      <th className="px-5 py-3 text-left text-xs uppercase tracking-wider text-muted-foreground font-medium">Role</th>
+                      <th className="px-5 py-3 text-left text-xs uppercase tracking-wider text-muted-foreground font-medium">Status</th>
+                      <th className="px-5 py-3 text-left text-xs uppercase tracking-wider text-muted-foreground">
                         <SortableHeader label="Joined" sortKey="joinDate" currentSort={userSort.sortKey} currentDirection={userSort.sortDir} onSort={userSort.onSort} />
                       </th>
                       <th className="px-5 py-3" />
@@ -242,10 +321,12 @@ const AdminDashboard = () => {
                   </thead>
                   <tbody>
                     {filteredUsers.map((user, i) => (
-                      <tr key={user.id} className={cn("transition-colors hover:bg-muted/50", i !== filteredUsers.length - 1 && "border-b border-border")}>
+                      <tr key={user.id} className={cn("transition-colors hover:bg-muted/40", i !== filteredUsers.length - 1 && "border-b border-border")}>
                         <td className="px-5 py-3">
                           <div className="flex items-center gap-3">
-                            <span className="text-xl">{user.avatar}</span>
+                            <div className="h-9 w-9 rounded-full bg-primary/10 border border-primary/20 text-primary font-bold flex items-center justify-center shrink-0 text-sm">
+                              {user.name.charAt(0).toUpperCase()}
+                            </div>
                             <div>
                               <p className="font-semibold">{user.name}</p>
                               <p className="text-sm text-muted-foreground">{user.email}</p>
@@ -267,9 +348,26 @@ const AdminDashboard = () => {
                           {new Date(user.joinDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                         </td>
                         <td className="px-5 py-3 text-right">
-                          <button className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted transition-colors">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </button>
+                          {user.role !== 'admin' && (
+                            <div className="flex items-center justify-end gap-1">
+                              <button
+                                onClick={() => handleSuspendUser(user.id, user.status)}
+                                className={cn("rounded-lg px-2.5 py-1 text-xs font-semibold transition-colors",
+                                  user.status === 'active'
+                                    ? "bg-yellow-500/10 text-yellow-600 hover:bg-yellow-500/20"
+                                    : "bg-green-500/10 text-green-600 hover:bg-green-500/20"
+                                )}
+                              >
+                                {user.status === 'active' ? 'Suspend' : 'Reactivate'}
+                              </button>
+                              <button
+                                onClick={() => setConfirmDelete({ type: 'user', id: user.id, name: user.name })}
+                                className="rounded-lg p-1.5 text-destructive/60 hover:bg-destructive/10 hover:text-destructive transition-colors"
+                              >
+                                <Trash className="h-4 w-4" />
+                              </button>
+                            </div>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -295,24 +393,25 @@ const AdminDashboard = () => {
               <div className="overflow-x-auto">
                 <table className="w-full text-base">
                   <thead>
-                    <tr className="border-b border-border text-muted-foreground">
-                      <th className="px-5 py-3 text-left font-medium">Auction</th>
-                      <th className="px-5 py-3 text-left font-medium">Seller</th>
-                      <th className="px-5 py-3 text-left font-medium">Status</th>
-                      <th className="px-5 py-3 text-right">
+                    <tr className="border-b border-border">
+                      <th className="px-5 py-3 text-left text-xs uppercase tracking-wider text-muted-foreground font-medium">Auction</th>
+                      <th className="px-5 py-3 text-left text-xs uppercase tracking-wider text-muted-foreground font-medium">Seller</th>
+                      <th className="px-5 py-3 text-left text-xs uppercase tracking-wider text-muted-foreground font-medium">Status</th>
+                      <th className="px-5 py-3 text-right text-xs uppercase tracking-wider text-muted-foreground">
                         <SortableHeader label="Current Bid" sortKey="currentBid" currentSort={auctionSort.sortKey} currentDirection={auctionSort.sortDir} onSort={auctionSort.onSort} className="justify-end" />
                       </th>
-                      <th className="px-5 py-3 text-right">
+                      <th className="px-5 py-3 text-right text-xs uppercase tracking-wider text-muted-foreground">
                         <SortableHeader label="Bids" sortKey="totalBids" currentSort={auctionSort.sortKey} currentDirection={auctionSort.sortDir} onSort={auctionSort.onSort} className="justify-end" />
                       </th>
-                      <th className="px-5 py-3 text-right">
+                      <th className="px-5 py-3 text-right text-xs uppercase tracking-wider text-muted-foreground">
                         <SortableHeader label="Watchers" sortKey="watchers" currentSort={auctionSort.sortKey} currentDirection={auctionSort.sortDir} onSort={auctionSort.onSort} className="justify-end" />
                       </th>
+                      <th className="px-5 py-3" />
                     </tr>
                   </thead>
                   <tbody>
                     {filteredAuctions.map((auction, i) => (
-                      <tr key={auction.id} className={cn("transition-colors hover:bg-muted/50", i !== filteredAuctions.length - 1 && "border-b border-border")}>
+                      <tr key={auction.id} className={cn("transition-colors hover:bg-muted/40", i !== filteredAuctions.length - 1 && "border-b border-border")}>
                         <td className="px-5 py-3">
                           <Link to={`/auctions/${auction.id}`} className="flex items-center gap-3 hover:text-primary transition-colors">
                             <img src={auction.images[0]} alt={auction.title} className="h-10 w-10 rounded-lg object-cover shrink-0" />
@@ -329,6 +428,14 @@ const AdminDashboard = () => {
                         </td>
                         <td className="px-5 py-3 text-right font-mono">{auction.totalBids}</td>
                         <td className="px-5 py-3 text-right font-mono">{auction.watchlistCount}</td>
+                        <td className="px-5 py-3 text-right">
+                          <button
+                            onClick={() => setConfirmDelete({ type: 'auction', id: auction.id, name: auction.title })}
+                            className="rounded-lg p-1.5 text-destructive/60 hover:bg-destructive/10 hover:text-destructive transition-colors"
+                          >
+                            <Trash className="h-4 w-4" />
+                          </button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -337,6 +444,40 @@ const AdminDashboard = () => {
             </div>
           </TabsContent>
         </Tabs>
+
+        {/* Confirm Delete Dialog */}
+        {confirmDelete && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+            <div className="bg-card border border-border rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10">
+                  <Trash className="h-5 w-5 text-destructive" />
+                </div>
+                <h3 className="font-display text-lg font-semibold">Confirm Delete</h3>
+              </div>
+              <p className="text-muted-foreground text-sm mb-5">
+                Are you sure you want to permanently delete <span className="font-semibold text-foreground">"{confirmDelete.name}"</span>?
+                {confirmDelete.type === 'user' && ' All their auctions, bids and data will be removed.'}
+                {confirmDelete.type === 'auction' && ' All bids on this auction will also be deleted.'}
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setConfirmDelete(null)}
+                  className="flex-1 rounded-xl border border-border py-2 text-sm font-medium hover:bg-muted transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => confirmDelete.type === 'user' ? handleDeleteUser(confirmDelete.id) : handleDeleteAuction(confirmDelete.id)}
+                  disabled={deleting}
+                  className="flex-1 rounded-xl bg-destructive py-2 text-sm font-semibold text-white hover:bg-destructive/90 transition-colors disabled:opacity-50"
+                >
+                  {deleting ? 'Deleting...' : 'Delete'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
