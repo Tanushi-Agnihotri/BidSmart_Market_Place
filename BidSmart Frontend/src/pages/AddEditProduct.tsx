@@ -723,6 +723,7 @@ const AddEditProduct = () => {
                 </div>
               </div>
             </div>
+          </div>
           )}
 
           {/* Duration for edit mode (simplified, no schedule change) */}
