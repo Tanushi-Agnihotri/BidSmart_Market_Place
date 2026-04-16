@@ -17,6 +17,7 @@ import { useApp } from '@/context/AppContext';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import loginImg from '@/assets/login-illustration.jpg';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const BecomeSeller = () => {
   const navigate = useNavigate();
@@ -76,7 +77,12 @@ const BecomeSeller = () => {
       upgradeRole('seller');
       navigate('/seller/dashboard');
     } catch (err: any) {
-      toast.error(err.message || 'Failed to submit application');
+      console.error('[BecomeSeller] Submit error:', err);
+      const msg = err?.message || 'Failed to submit application';
+      toast.error(msg);
+      if (err?.validationErrors?.length) {
+        err.validationErrors.forEach((ve: any) => toast.error(`${ve.field}: ${ve.message}`));
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -242,24 +248,20 @@ const BecomeSeller = () => {
 
                   <div>
                     <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 block">Primary Category</label>
-                    <div className="relative group">
-                      <select
-                        name="businessCategory"
-                        value={formData.businessCategory}
-                        onChange={handleInputChange}
-                        required
-                        className="w-full rounded-xl border border-border bg-muted/60 px-4 py-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 focus:bg-muted transition-all appearance-none cursor-pointer"
-                      >
-                        <option value="" disabled>Select a category</option>
-                        <option value="watches">Watches & Jewelry</option>
-                        <option value="art">Fine Art</option>
-                        <option value="vehicles">Classic Vehicles</option>
-                        <option value="other">Other Collectibles</option>
-                      </select>
-                      <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground/60">
-                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                      </div>
-                    </div>
+                    <Select
+                      value={formData.businessCategory}
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, businessCategory: value }))}
+                    >
+                      <SelectTrigger className="w-full rounded-xl border border-border bg-muted/60 px-4 py-3 h-auto text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 focus:bg-muted transition-all">
+                        <SelectValue placeholder="Select a category" />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-xl border border-border bg-card shadow-lg">
+                        <SelectItem value="watches" className="rounded-lg cursor-pointer">Watches & Jewelry</SelectItem>
+                        <SelectItem value="art" className="rounded-lg cursor-pointer">Fine Art</SelectItem>
+                        <SelectItem value="vehicles" className="rounded-lg cursor-pointer">Classic Vehicles</SelectItem>
+                        <SelectItem value="other" className="rounded-lg cursor-pointer">Other Collectibles</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div>

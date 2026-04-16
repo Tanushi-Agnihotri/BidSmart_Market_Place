@@ -49,6 +49,19 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(apiError);
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiError> handleIllegalArgument(IllegalArgumentException exception, HttpServletRequest request) {
+        ApiError apiError = new ApiError(
+            Instant.now(),
+            HttpStatus.BAD_REQUEST.value(),
+            HttpStatus.BAD_REQUEST.getReasonPhrase(),
+            exception.getMessage(),
+            request.getRequestURI(),
+            List.of()
+        );
+        return ResponseEntity.badRequest().body(apiError);
+    }
+
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiError> handleUnreadableMessage(HttpMessageNotReadableException exception, HttpServletRequest request) {
         ApiError apiError = new ApiError(
@@ -64,11 +77,15 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleGenericException(Exception exception, HttpServletRequest request) {
+        // Log the actual exception so we can debug
+        System.err.println("[GlobalExceptionHandler] Unhandled exception at " + request.getRequestURI() + ": " + exception.getMessage());
+        exception.printStackTrace();
+
         ApiError apiError = new ApiError(
             Instant.now(),
             HttpStatus.INTERNAL_SERVER_ERROR.value(),
             HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
-            "Unexpected server error",
+            exception.getMessage() != null ? exception.getMessage() : "Unexpected server error",
             request.getRequestURI(),
             List.of()
         );

@@ -6,7 +6,10 @@ const AUTH_STORAGE_KEY = 'bidsmart.auth';
 
 function getToken(): string | null {
   try {
-    const raw = localStorage.getItem(AUTH_STORAGE_KEY);
+    // Check sessionStorage first (active tab session), then localStorage (remember-me)
+    const raw =
+      sessionStorage.getItem(AUTH_STORAGE_KEY) ??
+      localStorage.getItem(AUTH_STORAGE_KEY);
     if (!raw) return null;
     return (JSON.parse(raw) as { token: string }).token;
   } catch {
@@ -30,6 +33,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     // Handle expired/invalid token — clear auth and reload so user can re-login
     if ((res.status === 401 || res.status === 403) && getToken() && !path.includes('/admin')) {
       localStorage.removeItem(AUTH_STORAGE_KEY);
+      sessionStorage.removeItem(AUTH_STORAGE_KEY);
       window.location.reload();
       throw new ApiError(401, 'Session expired. Please log in again.');
     }
