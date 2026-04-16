@@ -1,6 +1,6 @@
 import { useState, useRef, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { MdOutlineArrowBack as ArrowLeft, MdOutlineCloudUpload as Upload, MdOutlineAddPhotoAlternate as ImagePlus, MdOutlineClose as X, MdOutlineSave as Save, MdOutlineVisibility as Eye, MdOutlineSync as Loader2, MdOutlineSchedule as Schedule, MdOutlinePlayArrow as PlayArrow, MdOutlineCalendarToday as CalendarIcon, MdOutlineAccessTime as ClockIcon, MdOutlineStar as Star, MdOutlineStarBorder as StarBorder } from 'react-icons/md';
+import { MdOutlineArrowBack as ArrowLeft, MdOutlineCloudUpload as Upload, MdOutlineAddPhotoAlternate as ImagePlus, MdOutlineClose as X, MdOutlineSave as Save, MdOutlineVisibility as Eye, MdOutlineSync as Loader2, MdOutlineSchedule as Schedule, MdOutlinePlayArrow as PlayArrow, MdOutlineCalendarToday as CalendarIcon, MdOutlineAccessTime as ClockIcon, MdOutlineStar as Star, MdOutlineStarBorder as StarBorder, MdOutlineInfo as Info, MdOutlineCurrencyRupee as RupeeSign, MdOutlinePhotoLibrary as PhotoLibrary, MdOutlineCategory as CategoryIcon } from 'react-icons/md';
 import { useApp } from '@/context/AppContext';
 
 import { Input } from '@/components/ui/input';
@@ -261,23 +261,41 @@ const AddEditProduct = () => {
     return `Select a start date — ${durationPart}`;
   })();
 
+  // Section icon helper
+  const SectionIcon = ({ icon: Icon, delay }: { icon: React.ElementType; delay?: string }) => (
+    <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20 shadow-sm transition-transform duration-300 group-hover:scale-110", delay && `animate-float-up ${delay}`)}>
+      <Icon className="h-4.5 w-4.5 text-primary" />
+    </div>
+  );
+
   return (
     <div className="relative min-h-screen overflow-hidden pt-24 pb-20 animate-fade-in">
       {/* Decorative background */}
       <div className="pointer-events-none absolute inset-0 bg-floating-orbs opacity-60" />
       <div className="pointer-events-none absolute inset-0 bg-lines-pattern opacity-30" />
 
+      {/* Decorative gradient orbs */}
+      <div className="pointer-events-none absolute -top-40 -right-40 h-[500px] w-[500px] rounded-full bg-primary/8 blur-[120px]" />
+      <div className="pointer-events-none absolute top-1/3 -left-32 h-[400px] w-[400px] rounded-full bg-violet-500/5 blur-[100px]" />
+      <div className="pointer-events-none absolute bottom-20 right-1/4 h-[350px] w-[350px] rounded-full bg-emerald-500/5 blur-[100px]" />
+
       <div className="relative container mx-auto px-4 max-w-3xl">
         {/* Hero header */}
-        <div className="relative overflow-hidden rounded-3xl p-[1px] bg-gradient-to-br from-primary/50 via-primary/20 to-border shadow-card mb-8">
+        <div className="relative overflow-hidden rounded-3xl p-[1px] bg-gradient-to-br from-primary/50 via-primary/20 to-border shadow-card mb-8 animate-float-up">
+          {/* Shimmer overlay */}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent rounded-3xl" style={{ animation: 'shimmer 4s ease-in-out infinite', backgroundSize: '200% 100%' }} />
+
           <div className="relative rounded-3xl bg-card/90 backdrop-blur-sm p-6 md:p-8">
-            <div className="flex items-start gap-4">
+            {/* Subtle gradient accent */}
+            <div className="absolute top-0 right-0 h-32 w-32 bg-gradient-to-bl from-primary/10 to-transparent rounded-bl-full" />
+
+            <div className="relative flex items-start gap-4">
               <button
                 type="button"
                 onClick={() => navigate('/seller/products')}
-                className="shrink-0 flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-muted/50 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors mt-1"
+                className="shrink-0 flex h-11 w-11 items-center justify-center rounded-xl border border-border bg-muted/50 text-muted-foreground hover:text-foreground hover:bg-muted hover:border-primary/30 transition-all mt-1 group"
               >
-                <ArrowLeft className="h-5 w-5" />
+                <ArrowLeft className="h-5 w-5 transition-transform group-hover:-translate-x-0.5" />
               </button>
               <div>
                 <span className="inline-block text-xs font-semibold uppercase tracking-[0.2em] text-primary mb-1">
@@ -296,22 +314,25 @@ const AddEditProduct = () => {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Basic Info */}
-          <div className="relative overflow-hidden rounded-2xl p-[1px] bg-gradient-to-br from-primary/30 via-border to-border shadow-card">
+          <div className="group relative overflow-hidden rounded-2xl p-[1px] bg-gradient-to-br from-primary/30 via-border to-border shadow-card animate-float-up delay-100">
             <div className="rounded-2xl bg-card/90 backdrop-blur-sm p-6">
-              <div className="flex items-center gap-2 mb-1">
-                <h2 className="font-display text-lg font-semibold">Basic Information</h2>
+              <div className="flex items-center gap-3 mb-1">
+                <SectionIcon icon={CategoryIcon} />
+                <div>
+                  <h2 className="font-display text-lg font-semibold">Basic Information</h2>
+                  <p className="text-sm text-muted-foreground">Title, category, and condition of your item.</p>
+                </div>
               </div>
-              <p className="text-sm text-muted-foreground mb-5">Title, category, and condition of your item.</p>
-              <div className="space-y-4">
+              <div className="mt-5 space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="title">Title *</Label>
-                  <Input id="title" value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Vintage Rolex Submariner 1968" />
+                  <Input id="title" value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Vintage Rolex Submariner 1968" className="h-11" />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Category *</Label>
                     <Select value={category} onValueChange={setCategory}>
-                      <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
+                      <SelectTrigger className="h-11"><SelectValue placeholder="Select category" /></SelectTrigger>
                       <SelectContent>
                         {categories.map(c => (
                           <SelectItem key={c.name} value={c.name}>
@@ -327,7 +348,7 @@ const AddEditProduct = () => {
                   <div className="space-y-2">
                     <Label>Condition *</Label>
                     <Select value={condition} onValueChange={setCondition}>
-                      <SelectTrigger><SelectValue placeholder="Select condition" /></SelectTrigger>
+                      <SelectTrigger className="h-11"><SelectValue placeholder="Select condition" /></SelectTrigger>
                       <SelectContent>
                         {conditions.map(c => (
                           <SelectItem key={c} value={c}>{c}</SelectItem>
@@ -344,6 +365,7 @@ const AddEditProduct = () => {
                     onChange={e => setDescription(e.target.value)}
                     placeholder="Describe your item in detail — condition, history, provenance..."
                     rows={4}
+                    className="resize-none"
                   />
                 </div>
               </div>
@@ -351,12 +373,15 @@ const AddEditProduct = () => {
           </div>
 
           {/* Images */}
-          <div className="relative overflow-hidden rounded-2xl p-[1px] bg-gradient-to-br from-primary/30 via-border to-border shadow-card">
+          <div className="group relative overflow-hidden rounded-2xl p-[1px] bg-gradient-to-br from-primary/30 via-border to-border shadow-card animate-float-up delay-200">
             <div className="rounded-2xl bg-card/90 backdrop-blur-sm p-6">
-              <div className="flex items-center gap-2 mb-1">
-                <h2 className="font-display text-lg font-semibold">Images</h2>
+              <div className="flex items-center gap-3 mb-1">
+                <SectionIcon icon={PhotoLibrary} />
+                <div>
+                  <h2 className="font-display text-lg font-semibold">Product Images</h2>
+                  <p className="text-sm text-muted-foreground">Upload up to 5 high-quality photos. Click the star to set the cover photo.</p>
+                </div>
               </div>
-              <p className="text-sm text-muted-foreground mb-5">Upload up to 5 high-quality photos. Click the star to set the cover photo.</p>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -365,22 +390,22 @@ const AddEditProduct = () => {
                 className="hidden"
                 onChange={handleFileSelect}
               />
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+              <div className="mt-5 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
                 {existingImages.map((img, idx) => {
                   const isCover = idx === coverIndex;
                   return (
                     <div
                       key={`existing-${idx}`}
                       className={cn(
-                        "relative group aspect-square rounded-xl overflow-hidden border-2 transition-all cursor-pointer",
-                        isCover ? "border-primary ring-2 ring-primary/20" : "border-border"
+                        "relative group/img aspect-square rounded-xl overflow-hidden border-2 transition-all cursor-pointer hover:shadow-md",
+                        isCover ? "border-primary ring-2 ring-primary/20 shadow-md" : "border-border hover:border-primary/40"
                       )}
                       onClick={() => setCoverIndex(idx)}
                     >
-                      <img src={img} alt={`Product ${idx + 1}`} className="w-full h-full object-cover" />
+                      <img src={img} alt={`Product ${idx + 1}`} className="w-full h-full object-cover transition-transform duration-300 group-hover/img:scale-105" />
                       {/* Cover badge */}
                       {isCover && (
-                        <div className="absolute top-1.5 left-1.5 rounded-full bg-primary px-2 py-0.5 flex items-center gap-1">
+                        <div className="absolute top-1.5 left-1.5 rounded-full bg-primary px-2 py-0.5 flex items-center gap-1 shadow-sm">
                           <Star className="h-3 w-3 text-primary-foreground fill-primary-foreground" />
                           <span className="text-sm font-bold text-primary-foreground">Cover</span>
                         </div>
@@ -390,7 +415,7 @@ const AddEditProduct = () => {
                         <button
                           type="button"
                           onClick={(e) => { e.stopPropagation(); setCoverIndex(idx); }}
-                          className="absolute top-1.5 left-1.5 rounded-full bg-black/50 backdrop-blur-sm p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="absolute top-1.5 left-1.5 rounded-full bg-black/50 backdrop-blur-sm p-1 opacity-0 group-hover/img:opacity-100 transition-opacity"
                           title="Set as cover photo"
                         >
                           <StarBorder className="h-3.5 w-3.5 text-white" />
@@ -405,7 +430,7 @@ const AddEditProduct = () => {
                           else if (idx < coverIndex) setCoverIndex(prev => prev - 1);
                           else if (idx === coverIndex) setCoverIndex(0);
                         }}
-                        className="absolute top-1.5 right-1.5 rounded-full bg-black/50 backdrop-blur-sm p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute top-1.5 right-1.5 rounded-full bg-black/50 backdrop-blur-sm p-1 opacity-0 group-hover/img:opacity-100 transition-opacity hover:bg-destructive/80"
                       >
                         <X className="h-3.5 w-3.5 text-white" />
                       </button>
@@ -419,15 +444,15 @@ const AddEditProduct = () => {
                     <div
                       key={`pending-${idx}`}
                       className={cn(
-                        "relative group aspect-square rounded-xl overflow-hidden border-2 transition-all cursor-pointer",
-                        isCover ? "border-primary ring-2 ring-primary/20" : "border-primary/30"
+                        "relative group/img aspect-square rounded-xl overflow-hidden border-2 transition-all cursor-pointer hover:shadow-md",
+                        isCover ? "border-primary ring-2 ring-primary/20 shadow-md" : "border-primary/30 hover:border-primary/50"
                       )}
                       onClick={() => setCoverIndex(combinedIdx)}
                     >
-                      <img src={img.preview} alt={`New ${idx + 1}`} className="w-full h-full object-cover" />
+                      <img src={img.preview} alt={`New ${idx + 1}`} className="w-full h-full object-cover transition-transform duration-300 group-hover/img:scale-105" />
                       {/* Cover badge */}
                       {isCover ? (
-                        <div className="absolute top-1.5 left-1.5 rounded-full bg-primary px-2 py-0.5 flex items-center gap-1">
+                        <div className="absolute top-1.5 left-1.5 rounded-full bg-primary px-2 py-0.5 flex items-center gap-1 shadow-sm">
                           <Star className="h-3 w-3 text-primary-foreground fill-primary-foreground" />
                           <span className="text-sm font-bold text-primary-foreground">Cover</span>
                         </div>
@@ -435,13 +460,13 @@ const AddEditProduct = () => {
                         <button
                           type="button"
                           onClick={(e) => { e.stopPropagation(); setCoverIndex(combinedIdx); }}
-                          className="absolute top-1.5 left-1.5 rounded-full bg-black/50 backdrop-blur-sm p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="absolute top-1.5 left-1.5 rounded-full bg-black/50 backdrop-blur-sm p-1 opacity-0 group-hover/img:opacity-100 transition-opacity"
                           title="Set as cover photo"
                         >
                           <StarBorder className="h-3.5 w-3.5 text-white" />
                         </button>
                       )}
-                      <div className="absolute bottom-0 left-0 right-0 bg-primary/80 text-primary-foreground text-sm text-center py-0.5 font-medium">
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-primary/90 to-primary/60 text-primary-foreground text-xs text-center py-1 font-medium backdrop-blur-[2px]">
                         Pending upload
                       </div>
                       <button
@@ -453,7 +478,7 @@ const AddEditProduct = () => {
                           else if (combinedIdx < coverIndex) setCoverIndex(prev => prev - 1);
                           else if (combinedIdx === coverIndex) setCoverIndex(0);
                         }}
-                        className="absolute top-1.5 right-1.5 rounded-full bg-black/50 backdrop-blur-sm p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute top-1.5 right-1.5 rounded-full bg-black/50 backdrop-blur-sm p-1 opacity-0 group-hover/img:opacity-100 transition-opacity hover:bg-destructive/80"
                       >
                         <X className="h-3.5 w-3.5 text-white" />
                       </button>
@@ -464,62 +489,95 @@ const AddEditProduct = () => {
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="aspect-square rounded-xl border-2 border-dashed border-border hover:border-primary/50 flex flex-col items-center justify-center gap-1.5 text-muted-foreground hover:text-primary transition-colors"
+                    className="aspect-square rounded-xl border-2 border-dashed border-border hover:border-primary/50 hover:bg-primary/5 flex flex-col items-center justify-center gap-1.5 text-muted-foreground hover:text-primary transition-all group/add"
                   >
-                    <ImagePlus className="h-6 w-6" />
-                    <span className="text-sm">Add Photo</span>
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted/80 group-hover/add:bg-primary/10 transition-colors">
+                      <ImagePlus className="h-5 w-5" />
+                    </div>
+                    <span className="text-xs font-medium">Add Photo</span>
                   </button>
                 )}
               </div>
               {totalImages > 0 && (
-                <p className="text-sm text-muted-foreground mt-2">{totalImages}/5 images</p>
+                <div className="flex items-center gap-2 mt-3">
+                  <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-primary to-primary/70 transition-all duration-500"
+                      style={{ width: `${(totalImages / 5) * 100}%` }}
+                    />
+                  </div>
+                  <span className="text-xs font-mono text-muted-foreground font-medium">{totalImages}/5</span>
+                </div>
               )}
             </div>
           </div>
 
           {/* Pricing */}
-          <div className="relative overflow-hidden rounded-2xl p-[1px] bg-gradient-to-br from-primary/30 via-border to-border shadow-card">
+          <div className="group relative overflow-hidden rounded-2xl p-[1px] bg-gradient-to-br from-primary/30 via-border to-border shadow-card animate-float-up delay-300">
             <div className="rounded-2xl bg-card/90 backdrop-blur-sm p-6">
-              <div className="flex items-center gap-2 mb-1">
-                <h2 className="font-display text-lg font-semibold">Pricing</h2>
+              <div className="flex items-center gap-3 mb-1">
+                <SectionIcon icon={RupeeSign} />
+                <div>
+                  <h2 className="font-display text-lg font-semibold">Pricing</h2>
+                  <p className="text-sm text-muted-foreground">Set your starting price and bid increment.</p>
+                </div>
               </div>
-              <p className="text-sm text-muted-foreground mb-5">Set your starting price and bid increment.</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="base-price">Starting Price (₹) *</Label>
-                  <Input
-                    id="base-price"
-                    type="number"
-                    min="1"
-                    value={basePrice}
-                    onChange={e => setBasePrice(e.target.value)}
-                    placeholder="0.00"
-                  />
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-mono text-sm">₹</span>
+                    <Input
+                      id="base-price"
+                      type="number"
+                      min="1"
+                      value={basePrice}
+                      onChange={e => setBasePrice(e.target.value)}
+                      placeholder="0.00"
+                      className="h-11 pl-7 font-mono"
+                    />
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="bid-increment">Bid Increment (₹) *</Label>
-                  <Input
-                    id="bid-increment"
-                    type="number"
-                    min="1"
-                    value={bidIncrement}
-                    onChange={e => setBidIncrement(e.target.value)}
-                    placeholder="0.00"
-                  />
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-mono text-sm">₹</span>
+                    <Input
+                      id="bid-increment"
+                      type="number"
+                      min="1"
+                      value={bidIncrement}
+                      onChange={e => setBidIncrement(e.target.value)}
+                      placeholder="0.00"
+                      className="h-11 pl-7 font-mono"
+                    />
+                  </div>
                 </div>
               </div>
+              {basePrice && bidIncrement && (
+                <div className="mt-4 rounded-xl bg-primary/5 border border-primary/15 p-3 flex items-start gap-2 animate-fade-in">
+                  <Info className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                  <p className="text-sm text-muted-foreground">
+                    Bidding starts at <span className="font-mono font-semibold text-foreground">₹{parseFloat(basePrice).toLocaleString()}</span> with
+                    minimum increments of <span className="font-mono font-semibold text-foreground">₹{parseFloat(bidIncrement).toLocaleString()}</span>
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
           {/* Scheduling & Duration */}
           {!isEdit && (
-            <div className="relative overflow-hidden rounded-2xl p-[1px] bg-gradient-to-br from-primary/30 via-border to-border shadow-card">
+            <div className="group relative overflow-hidden rounded-2xl p-[1px] bg-gradient-to-br from-primary/30 via-border to-border shadow-card animate-float-up delay-400">
               <div className="rounded-2xl bg-card/90 backdrop-blur-sm p-6">
-                <div className="flex items-center gap-2 mb-1">
-                  <h2 className="font-display text-lg font-semibold">Schedule & Duration</h2>
+                <div className="flex items-center gap-3 mb-1">
+                  <SectionIcon icon={Schedule} />
+                  <div>
+                    <h2 className="font-display text-lg font-semibold">Schedule & Duration</h2>
+                    <p className="text-sm text-muted-foreground">Choose when your auction starts and how long it runs.</p>
+                  </div>
                 </div>
-                <p className="text-sm text-muted-foreground mb-5">Choose when your auction starts and how long it runs.</p>
-                <div className="space-y-6">
+                <div className="mt-5 space-y-6">
                 {/* Start Time Toggle */}
                 <div className="space-y-3">
                   <Label>When should the auction start?</Label>
@@ -530,13 +588,13 @@ const AddEditProduct = () => {
                       className={cn(
                         "flex items-center gap-3 rounded-xl border-2 p-4 transition-all text-left",
                         startMode === 'now'
-                          ? "border-primary bg-primary/5"
+                          ? "border-primary bg-primary/5 shadow-sm"
                           : "border-border hover:border-primary/30"
                       )}
                     >
                       <div className={cn(
-                        "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",
-                        startMode === 'now' ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                        "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors",
+                        startMode === 'now' ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"
                       )}>
                         <PlayArrow className="h-5 w-5" />
                       </div>
@@ -551,13 +609,13 @@ const AddEditProduct = () => {
                       className={cn(
                         "flex items-center gap-3 rounded-xl border-2 p-4 transition-all text-left",
                         startMode === 'scheduled'
-                          ? "border-primary bg-primary/5"
+                          ? "border-primary bg-primary/5 shadow-sm"
                           : "border-border hover:border-primary/30"
                       )}
                     >
                       <div className={cn(
-                        "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",
-                        startMode === 'scheduled' ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                        "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors",
+                        startMode === 'scheduled' ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"
                       )}>
                         <Schedule className="h-5 w-5" />
                       </div>
@@ -586,7 +644,7 @@ const AddEditProduct = () => {
                           onChange={e => setScheduledDateStr(e.target.value)}
                           min={getMinDate()}
                           max={getMaxDate()}
-                          className="font-mono"
+                          className="font-mono h-11"
                         />
                       </div>
                       {/* Time Picker */}
@@ -596,7 +654,7 @@ const AddEditProduct = () => {
                           Time *
                         </Label>
                         <Select value={scheduledTimeStr} onValueChange={setScheduledTimeStr}>
-                          <SelectTrigger className="font-mono">
+                          <SelectTrigger className="font-mono h-11">
                             <SelectValue placeholder="Select time" />
                           </SelectTrigger>
                           <SelectContent className="max-h-60">
@@ -645,8 +703,8 @@ const AddEditProduct = () => {
                       type="button"
                       onClick={() => setDurationMode('preset')}
                       className={cn(
-                        "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
-                        durationMode === 'preset' ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"
+                        "rounded-lg px-3 py-1.5 text-sm font-medium transition-all",
+                        durationMode === 'preset' ? "bg-primary text-primary-foreground shadow-sm" : "bg-muted text-muted-foreground hover:text-foreground"
                       )}
                     >
                       Preset
@@ -655,8 +713,8 @@ const AddEditProduct = () => {
                       type="button"
                       onClick={() => setDurationMode('custom')}
                       className={cn(
-                        "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
-                        durationMode === 'custom' ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"
+                        "rounded-lg px-3 py-1.5 text-sm font-medium transition-all",
+                        durationMode === 'custom' ? "bg-primary text-primary-foreground shadow-sm" : "bg-muted text-muted-foreground hover:text-foreground"
                       )}
                     >
                       Custom
@@ -671,9 +729,9 @@ const AddEditProduct = () => {
                           type="button"
                           onClick={() => setPresetDuration(d.hours.toString())}
                           className={cn(
-                            "rounded-xl px-3 py-2 text-base font-medium transition-colors border",
+                            "rounded-xl px-3 py-2 text-sm font-medium transition-all border",
                             presetDuration === d.hours.toString()
-                              ? "border-primary bg-primary/10 text-primary"
+                              ? "border-primary bg-primary/10 text-primary shadow-sm"
                               : "border-border text-muted-foreground hover:text-foreground hover:border-primary/30"
                           )}
                         >
@@ -693,6 +751,7 @@ const AddEditProduct = () => {
                           value={customDurationDays}
                           onChange={e => setCustomDurationDays(e.target.value)}
                           placeholder="0"
+                          className="h-11 font-mono"
                         />
                       </div>
                       <div className="space-y-2 flex-1">
@@ -705,6 +764,7 @@ const AddEditProduct = () => {
                           value={customDurationHours}
                           onChange={e => setCustomDurationHours(e.target.value)}
                           placeholder="0"
+                          className="h-11 font-mono"
                         />
                       </div>
                     </div>
@@ -713,11 +773,11 @@ const AddEditProduct = () => {
 
                 {/* Summary */}
                 <div className={cn(
-                  "rounded-xl border p-3",
+                  "rounded-xl border p-3 flex items-start gap-2",
                   durationHoursSummary <= 0 ? "bg-destructive/5 border-destructive/20" : "bg-muted/50 border-border"
                 )}>
+                  <Schedule className={cn("h-4 w-4 mt-0.5 shrink-0", durationHoursSummary <= 0 ? "text-destructive" : "text-muted-foreground")} />
                   <p className={cn("text-sm", durationHoursSummary <= 0 ? "text-destructive" : "text-muted-foreground")}>
-                    <Schedule className="inline h-3.5 w-3.5 mr-1 -mt-0.5" />
                     {scheduleSummary}
                   </p>
                 </div>
@@ -728,25 +788,31 @@ const AddEditProduct = () => {
 
           {/* Duration for edit mode (simplified, no schedule change) */}
           {isEdit && (
-            <div className="relative overflow-hidden rounded-2xl p-[1px] bg-gradient-to-br from-primary/30 via-border to-border shadow-card">
+            <div className="group relative overflow-hidden rounded-2xl p-[1px] bg-gradient-to-br from-primary/30 via-border to-border shadow-card animate-float-up delay-400">
               <div className="rounded-2xl bg-card/90 backdrop-blur-sm p-6">
-                <div className="flex items-center gap-2 mb-1">
-                  <h2 className="font-display text-lg font-semibold">Duration</h2>
+                <div className="flex items-center gap-3 mb-1">
+                  <SectionIcon icon={Schedule} />
+                  <div>
+                    <h2 className="font-display text-lg font-semibold">Duration</h2>
+                    <p className="text-sm text-muted-foreground">Auction timing cannot be changed after creation.</p>
+                  </div>
                 </div>
-                <p className="text-sm text-muted-foreground mb-3">Auction timing cannot be changed after creation.</p>
-                <p className="text-base text-muted-foreground">
-                  This auction was created with a fixed schedule. Start time and duration cannot be modified.
-                </p>
+                <div className="mt-4 rounded-xl bg-muted/50 border border-border p-3 flex items-start gap-2">
+                  <Info className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                  <p className="text-sm text-muted-foreground">
+                    This auction was created with a fixed schedule. Start time and duration cannot be modified.
+                  </p>
+                </div>
               </div>
             </div>
           )}
 
           {/* Actions */}
-          <div className="flex flex-col sm:flex-row gap-3 justify-end">
+          <div className="flex flex-col sm:flex-row gap-3 justify-end animate-float-up delay-500">
             <button
               type="button"
               onClick={() => navigate('/seller/products')}
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-border px-6 py-3 text-base font-medium text-foreground transition-all hover:bg-muted"
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-border px-6 py-3 text-base font-medium text-foreground transition-all hover:bg-muted hover:border-primary/20"
             >
               Cancel
             </button>

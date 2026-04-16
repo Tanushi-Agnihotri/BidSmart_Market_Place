@@ -1,10 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import {
   MdOutlineInventory as Package,
   MdOutlineCurrencyRupee as RupeeSign,
   MdOutlineTrendingUp as TrendingUp,
   MdOutlineVisibility as Eye,
-  MdOutlineAdd as Plus,
   MdOutlineMoreHoriz as MoreHorizontal,
   MdOutlineStorefront as Storefront,
   MdOutlineEmojiEvents as Trophy,
@@ -17,20 +16,12 @@ import { useApp } from '@/context/AppContext';
 import StatsCard from '@/components/shared/StatsCard';
 import StatusBadge from '@/components/shared/StatusBadge';
 import CountdownTimer from '@/components/shared/CountdownTimer';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { categories } from '@/data/mockData';
-import { toast } from 'sonner';
-import { auctionApi, ApiError } from '@/lib/apiService';
 import SellerAccessGate from '@/components/shared/SellerAccessGate';
 
 const SellerDashboard = () => {
-  const { currentUser, currentRole, authToken, auctions, bids, refreshAuctions } = useApp();
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const { currentUser, currentRole, auctions, bids, refreshAuctions } = useApp();
 
   // Refresh data on mount to ensure latest auction statuses are loaded
   useEffect(() => {
@@ -56,50 +47,6 @@ const SellerDashboard = () => {
   ];
   const maxRevenue = Math.max(...monthlyRevenue.map(m => m.amount));
 
-  const [addingProduct, setAddingProduct] = useState(false);
-  const [dlgTitle, setDlgTitle] = useState('');
-  const [dlgCategory, setDlgCategory] = useState('');
-  const [dlgCondition, setDlgCondition] = useState('');
-  const [dlgDescription, setDlgDescription] = useState('');
-  const [dlgBasePrice, setDlgBasePrice] = useState('');
-  const [dlgBidIncrement, setDlgBidIncrement] = useState('');
-
-  const handleAddProduct = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!authToken) {
-      toast.error('Please sign in with your account to list products.');
-      return;
-    }
-    if (!dlgTitle || !dlgCategory || !dlgCondition || !dlgBasePrice || !dlgBidIncrement) {
-      toast.error('Please fill in all required fields.');
-      return;
-    }
-
-    setAddingProduct(true);
-    try {
-      await auctionApi.create({
-        title: dlgTitle,
-        category: dlgCategory,
-        condition: dlgCondition,
-        description: dlgDescription,
-        basePrice: parseFloat(dlgBasePrice),
-        bidIncrement: parseFloat(dlgBidIncrement),
-        durationHours: 24,
-      });
-      toast.success('Product listed successfully!');
-      await refreshAuctions();
-      setDialogOpen(false);
-      // Reset form
-      setDlgTitle(''); setDlgCategory(''); setDlgCondition('');
-      setDlgDescription(''); setDlgBasePrice(''); setDlgBidIncrement('');
-    } catch (err) {
-      const message = err instanceof ApiError ? err.message : 'Failed to list product';
-      toast.error(message);
-    } finally {
-      setAddingProduct(false);
-    }
-  };
-
   if (currentRole !== 'seller') {
     return (
       <SellerAccessGate
@@ -114,111 +61,70 @@ const SellerDashboard = () => {
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
     .slice(0, 5);
 
+  const statCards = [
+    { icon: Package, label: 'Active Listings', value: String(activeCount), accent: 'from-amber-500/20 to-orange-500/10', iconBg: 'from-amber-500/25 to-orange-500/10', borderAccent: 'border-amber-500/20', textAccent: 'from-amber-400 to-orange-500' },
+    { icon: RupeeSign, label: 'Total Revenue', value: `₹${totalRevenue.toLocaleString()}`, accent: 'from-emerald-500/20 to-green-500/10', iconBg: 'from-emerald-500/25 to-green-500/10', borderAccent: 'border-emerald-500/20', textAccent: 'from-emerald-400 to-green-500' },
+    { icon: TrendingUp, label: 'Bids Received', value: String(totalBidsReceived), accent: 'from-blue-500/20 to-cyan-500/10', iconBg: 'from-blue-500/25 to-cyan-500/10', borderAccent: 'border-blue-500/20', textAccent: 'from-blue-400 to-cyan-500' },
+    { icon: Eye, label: 'Total Views', value: String(totalViews), accent: 'from-violet-500/20 to-purple-500/10', iconBg: 'from-violet-500/25 to-purple-500/10', borderAccent: 'border-violet-500/20', textAccent: 'from-violet-400 to-purple-500' },
+  ];
+
   return (
     <div className="relative min-h-screen overflow-hidden pt-24 pb-20 animate-fade-in">
       {/* Decorative background */}
       <div className="pointer-events-none absolute inset-0 bg-floating-orbs opacity-60" />
       <div className="pointer-events-none absolute inset-0 bg-lines-pattern opacity-30" />
 
+      {/* Extra decorative gradient orbs */}
+      <div className="pointer-events-none absolute top-32 -left-32 h-80 w-80 rounded-full bg-primary/10 blur-[100px] animate-pulse-glow" />
+      <div className="pointer-events-none absolute top-64 -right-24 h-64 w-64 rounded-full bg-violet-500/10 blur-[80px]" style={{ animation: 'orb-float-1 12s ease-in-out infinite' }} />
+      <div className="pointer-events-none absolute bottom-48 left-1/3 h-56 w-56 rounded-full bg-emerald-500/8 blur-[90px]" style={{ animation: 'orb-float-2 15s ease-in-out infinite' }} />
+
       <div className="relative container mx-auto px-4">
         {/* Hero header */}
-        <div className="relative overflow-hidden rounded-3xl p-[1px] bg-gradient-to-br from-primary/50 via-primary/20 to-border shadow-card mb-8">
-          <div className="relative rounded-3xl bg-card/90 backdrop-blur-sm p-6 md:p-8">
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
-              <div className="flex items-start gap-4">
-                <div className="relative shrink-0">
-                  <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/25 to-primary/5 border border-primary/30 shadow-lg">
-                    <Storefront className="h-7 w-7 text-primary" />
+        <div className="relative animate-float-up">
+          {/* Orbs behind hero card */}
+          <div className="pointer-events-none absolute -top-10 -left-10 h-40 w-40 rounded-full bg-primary/15 blur-[60px]" />
+          <div className="pointer-events-none absolute -bottom-8 -right-8 h-32 w-32 rounded-full bg-primary/10 blur-[50px]" />
+
+          <div className="relative overflow-hidden rounded-3xl p-[1px] bg-gradient-to-br from-primary/50 via-primary/20 to-border shadow-card mb-8">
+            {/* Shimmer sweep overlay */}
+            <div className="absolute inset-0 overflow-hidden rounded-3xl pointer-events-none">
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent" style={{ animation: 'shimmer 4s ease-in-out infinite', backgroundSize: '200% 100%' }} />
+            </div>
+
+            <div className="relative rounded-3xl bg-card/90 backdrop-blur-sm p-6 md:p-8">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+                <div className="flex items-start gap-4">
+                  <div className="relative shrink-0">
+                    <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/25 to-primary/5 border border-primary/30 shadow-lg animate-pulse-glow">
+                      <Storefront className="h-7 w-7 text-primary" />
+                    </div>
+                  </div>
+                  <div>
+                    <span className="inline-block text-xs font-semibold uppercase tracking-[0.2em] text-primary mb-1">
+                      Seller Zone
+                    </span>
+                    <h1 className="font-display text-3xl md:text-4xl font-bold tracking-tight bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">
+                      Seller Dashboard
+                    </h1>
+                    <p className="text-sm md:text-base text-muted-foreground mt-1">
+                      Welcome back{currentUser?.name ? `, ${currentUser.name.split(' ')[0]}` : ''} — here's how your auctions are performing.
+                    </p>
                   </div>
                 </div>
-                <div>
-                  <span className="inline-block text-xs font-semibold uppercase tracking-[0.2em] text-primary mb-1">
-                    Seller Zone
-                  </span>
-                  <h1 className="font-display text-3xl md:text-4xl font-bold tracking-tight bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">
-                    Seller Dashboard
-                  </h1>
-                  <p className="text-sm md:text-base text-muted-foreground mt-1">
-                    Welcome back{currentUser?.name ? `, ${currentUser.name.split(' ')[0]}` : ''} — here's how your auctions are performing.
-                  </p>
-                </div>
-              </div>
 
-              <div className="flex flex-wrap items-center gap-2">
-                <Button asChild variant="outline" size="lg" className="gap-2">
-                  <Link to="/seller/products">
-                    <Package className="h-4 w-4" /> My Products
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" size="lg" className="gap-2">
-                  <Link to="/seller/results">
-                    <Trophy className="h-4 w-4" /> Results
-                  </Link>
-                </Button>
-                <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button size="lg" className="gap-2">
-                      <Plus className="h-4 w-4" /> List Product
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-lg">
-                    <DialogHeader>
-                      <DialogTitle className="font-display text-xl">List New Product</DialogTitle>
-                    </DialogHeader>
-                    <form onSubmit={handleAddProduct} className="space-y-4 mt-2">
-                      <div>
-                        <label className="text-base font-medium text-foreground mb-1.5 block">Title</label>
-                        <Input value={dlgTitle} onChange={e => setDlgTitle(e.target.value)} placeholder="e.g., Vintage Rolex Submariner" required />
-                      </div>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="text-base font-medium text-foreground mb-1.5 block">Category</label>
-                          <Select value={dlgCategory} onValueChange={setDlgCategory}>
-                            <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                            <SelectContent>
-                              {categories.map(c => (
-                                <SelectItem key={c.name} value={c.name}>
-                                  <div className="flex items-center gap-2">
-                                    {c.icon}
-                                    <span>{c.name}</span>
-                                  </div>
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <label className="text-base font-medium text-foreground mb-1.5 block">Condition</label>
-                          <Select value={dlgCondition} onValueChange={setDlgCondition}>
-                            <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                            <SelectContent>
-                              {['New', 'Like New', 'Excellent', 'Very Good', 'Good', 'Fair'].map(c => (
-                                <SelectItem key={c} value={c}>{c}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                      <div>
-                        <label className="text-base font-medium text-foreground mb-1.5 block">Description</label>
-                        <Textarea value={dlgDescription} onChange={e => setDlgDescription(e.target.value)} placeholder="Describe your item..." rows={3} />
-                      </div>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="text-base font-medium text-foreground mb-1.5 block">Base Price (₹)</label>
-                          <Input type="number" min="1" value={dlgBasePrice} onChange={e => setDlgBasePrice(e.target.value)} placeholder="0.00" required />
-                        </div>
-                        <div>
-                          <label className="text-base font-medium text-foreground mb-1.5 block">Bid Increment (₹)</label>
-                          <Input type="number" min="1" value={dlgBidIncrement} onChange={e => setDlgBidIncrement(e.target.value)} placeholder="100" required />
-                        </div>
-                      </div>
-                      <button type="submit" disabled={addingProduct} className="w-full rounded-xl bg-primary py-2.5 text-base font-semibold text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-70">
-                        {addingProduct ? 'Listing...' : 'List Product'}
-                      </button>
-                    </form>
-                  </DialogContent>
-                </Dialog>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button asChild variant="outline" size="lg" className="gap-2">
+                    <Link to="/seller/products">
+                      <Package className="h-4 w-4" /> My Products
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline" size="lg" className="gap-2">
+                    <Link to="/seller/results">
+                      <Trophy className="h-4 w-4" /> Results
+                    </Link>
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
@@ -226,15 +132,42 @@ const SellerDashboard = () => {
 
         {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-          <StatsCard icon={Package} label="Active Listings" value={String(activeCount)} />
-          <StatsCard icon={RupeeSign} label="Total Revenue" value={`₹${totalRevenue.toLocaleString()}`} />
-          <StatsCard icon={TrendingUp} label="Bids Received" value={String(totalBidsReceived)} />
-          <StatsCard icon={Eye} label="Total Views" value={String(totalViews)} />
+          {statCards.map((card, i) => (
+            <div
+              key={card.label}
+              className={cn(
+                "group relative rounded-2xl p-[1px] bg-gradient-to-br from-primary/30 via-border to-border shadow-card animate-float-up overflow-hidden",
+                i === 0 && 'delay-100',
+                i === 1 && 'delay-200',
+                i === 2 && 'delay-300',
+                i === 3 && 'delay-400',
+              )}
+              style={{ opacity: 0, animationFillMode: 'forwards' }}
+            >
+              <div className="relative rounded-2xl bg-card/90 backdrop-blur-sm p-5 h-full overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5">
+                {/* Colored accent glow in corner */}
+                <div className={cn("absolute -top-6 -right-6 h-20 w-20 rounded-full bg-gradient-to-br opacity-40 blur-2xl transition-opacity duration-300 group-hover:opacity-70", card.accent)} />
+
+                {/* Top accent line */}
+                <div className={cn("absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity")} />
+
+                <div className="flex items-start justify-between relative">
+                  <div className={cn("rounded-xl bg-gradient-to-br p-2.5 border transition-transform duration-300 group-hover:scale-110", card.iconBg, card.borderAccent)}>
+                    <card.icon className="h-5 w-5 text-primary" />
+                  </div>
+                </div>
+                <p className={cn("mt-4 font-mono text-3xl font-bold tracking-tight leading-none bg-gradient-to-br bg-clip-text text-transparent", card.textAccent)}>
+                  {card.value}
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground font-medium">{card.label}</p>
+              </div>
+            </div>
+          ))}
         </div>
 
         <div className="grid lg:grid-cols-3 gap-6 mb-10">
           {/* Products Table */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 animate-float-up delay-500" style={{ opacity: 0, animationFillMode: 'forwards' }}>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 border border-primary/20">
@@ -249,16 +182,23 @@ const SellerDashboard = () => {
             <div className="relative overflow-hidden rounded-2xl p-[1px] bg-gradient-to-br from-primary/30 via-border to-border shadow-card">
               <div className="rounded-2xl bg-card/90 backdrop-blur-sm overflow-hidden">
                 {myAuctions.length === 0 ? (
-                  <div className="p-16 text-center">
-                    <div className="relative inline-flex items-center justify-center mb-4">
-                      <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/30">
-                        <Package className="h-8 w-8 text-primary" />
+                  <div className="relative p-16 text-center overflow-hidden">
+                    {/* Gradient background for empty state */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/3" />
+                    <div className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-40 w-40 rounded-full bg-primary/10 blur-[60px]" />
+
+                    <div className="relative inline-flex items-center justify-center mb-5">
+                      <div className="absolute inset-0 h-20 w-20 rounded-2xl bg-primary/10 blur-xl mx-auto" />
+                      <div className="relative flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/30 animate-gentle-bounce">
+                        <Package className="h-10 w-10 text-primary" />
                       </div>
                     </div>
-                    <p className="font-display text-xl font-semibold mb-1">No products listed yet</p>
-                    <p className="text-sm text-muted-foreground mb-5">Create your first listing to start receiving bids.</p>
-                    <Button onClick={() => setDialogOpen(true)} className="gap-2">
-                      <Plus className="h-4 w-4" /> List Your First Product
+                    <p className="relative font-display text-xl font-semibold mb-1">No products listed yet</p>
+                    <p className="relative text-sm text-muted-foreground mb-4">Create your first listing to start receiving bids.</p>
+                    <Button asChild className="relative gap-2">
+                      <Link to="/seller/products/new">
+                        <Package className="h-4 w-4" /> Add Product
+                      </Link>
                     </Button>
                   </div>
                 ) : (
@@ -276,7 +216,14 @@ const SellerDashboard = () => {
                       </thead>
                       <tbody>
                         {myAuctions.map((auction, i) => (
-                          <tr key={auction.id} className={cn("group transition-colors hover:bg-muted/40", i !== myAuctions.length - 1 && "border-b border-border")}>
+                          <tr
+                            key={auction.id}
+                            className={cn(
+                              "group transition-colors hover:bg-muted/40",
+                              i !== myAuctions.length - 1 && "border-b border-border",
+                              i % 2 === 1 && "bg-muted/15"
+                            )}
+                          >
                             <td className="px-5 py-3">
                               <Link to={`/auctions/${auction.id}`} className="flex items-center gap-3 hover:text-primary transition-colors">
                                 <div className="h-11 w-11 rounded-lg overflow-hidden shrink-0 border border-border">
@@ -324,7 +271,7 @@ const SellerDashboard = () => {
           {/* Right column: Revenue Chart + Recent Bids */}
           <div className="space-y-6">
             {/* Revenue Chart */}
-            <div>
+            <div className="animate-float-up delay-600" style={{ opacity: 0, animationFillMode: 'forwards' }}>
               <div className="flex items-center gap-2 mb-4">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 border border-primary/20">
                   <Insights className="h-4 w-4 text-primary" />
@@ -336,7 +283,7 @@ const SellerDashboard = () => {
                   <div className="flex items-baseline justify-between mb-4">
                     <div>
                       <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">6-Month Total</p>
-                      <p className="font-mono text-2xl font-bold text-primary mt-0.5">
+                      <p className="font-mono text-2xl font-bold bg-gradient-to-br from-primary to-amber-400 bg-clip-text text-transparent mt-0.5">
                         ₹{monthlyRevenue.reduce((s, m) => s + m.amount, 0).toLocaleString()}
                       </p>
                     </div>
@@ -344,38 +291,68 @@ const SellerDashboard = () => {
                       <TrendingUp className="h-3 w-3" /> Trending
                     </span>
                   </div>
-                  <div className="flex items-end gap-2 h-40">
-                    {monthlyRevenue.map(m => (
-                      <div key={m.month} className="flex-1 flex flex-col items-center justify-end gap-1 h-full group">
-                        <span className="text-xs font-mono text-primary font-semibold opacity-0 group-hover:opacity-100 transition-opacity">
-                          ₹{(m.amount / 1000).toFixed(1)}k
-                        </span>
-                        <div
-                          className="w-full rounded-t-lg bg-gradient-to-t from-primary to-primary/40 transition-all duration-500 group-hover:from-primary group-hover:to-primary/60 shadow-sm"
-                          style={{ height: `${(m.amount / maxRevenue) * 100}%`, minHeight: 8 }}
-                        />
-                        <span className="text-xs text-muted-foreground font-medium">{m.month}</span>
-                      </div>
-                    ))}
+
+                  {/* Chart area with subtle grid */}
+                  <div className="relative">
+                    {/* Horizontal grid lines */}
+                    <div className="absolute inset-0 flex flex-col justify-between pointer-events-none" style={{ height: '160px' }}>
+                      {[0, 1, 2, 3].map(i => (
+                        <div key={i} className="w-full border-t border-border/30" />
+                      ))}
+                    </div>
+
+                    <div className="relative flex items-end gap-2 h-40">
+                      {monthlyRevenue.map((m, i) => (
+                        <div key={m.month} className="flex-1 flex flex-col items-center justify-end gap-1 h-full group">
+                          {/* Tooltip-like hover value */}
+                          <div className="relative opacity-0 group-hover:opacity-100 transition-all duration-200 group-hover:-translate-y-1">
+                            <div className="bg-foreground text-background text-xs font-mono font-semibold px-2 py-1 rounded-md shadow-lg whitespace-nowrap">
+                              ₹{(m.amount / 1000).toFixed(1)}k
+                            </div>
+                            <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-foreground" />
+                          </div>
+                          <div
+                            className="relative w-full rounded-t-lg overflow-hidden transition-all duration-500 shadow-sm group-hover:shadow-md group-hover:shadow-primary/20"
+                            style={{ height: `${(m.amount / maxRevenue) * 100}%`, minHeight: 8 }}
+                          >
+                            {/* Gradient bar with glow */}
+                            <div className="absolute inset-0 bg-gradient-to-t from-primary via-primary/70 to-amber-400/60" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-transparent to-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            {/* Subtle glow effect */}
+                            <div className="absolute -inset-1 bg-primary/20 blur-md opacity-0 group-hover:opacity-100 transition-opacity rounded-lg -z-10" />
+                          </div>
+                          <span className="text-xs text-muted-foreground font-medium">{m.month}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Recent Bids */}
-            <div>
+            <div className="animate-float-up delay-700" style={{ opacity: 0, animationFillMode: 'forwards' }}>
               <div className="flex items-center gap-2 mb-4">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 border border-primary/20">
                   <Bolt className="h-4 w-4 text-primary" />
                 </div>
                 <h2 className="font-display text-2xl font-semibold">Recent Bids</h2>
+                {recentBids.length > 0 && (
+                  <span className="relative flex h-2.5 w-2.5 ml-1">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
+                  </span>
+                )}
               </div>
               <div className="relative overflow-hidden rounded-2xl p-[1px] bg-gradient-to-br from-primary/30 via-border to-border shadow-card">
                 <div className="rounded-2xl bg-card/90 backdrop-blur-sm overflow-hidden">
                   {recentBids.length === 0 ? (
-                    <div className="p-8 text-center">
-                      <Bolt className="h-8 w-8 text-muted-foreground/50 mx-auto mb-2" />
-                      <p className="text-sm text-muted-foreground">No bids yet. They'll appear here as they come in.</p>
+                    <div className="relative p-8 text-center overflow-hidden">
+                      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent" />
+                      <div className="relative">
+                        <Bolt className="h-8 w-8 text-muted-foreground/50 mx-auto mb-2" />
+                        <p className="text-sm text-muted-foreground">No bids yet. They'll appear here as they come in.</p>
+                      </div>
                     </div>
                   ) : (
                     recentBids.map((bid, i, arr) => {
@@ -385,18 +362,28 @@ const SellerDashboard = () => {
                         <div
                           key={bid.id}
                           className={cn(
-                            "px-4 py-3 flex items-center gap-3 hover:bg-muted/40 transition-colors",
-                            i !== arr.length - 1 && "border-b border-border"
+                            "px-4 py-3 flex items-center gap-3 hover:bg-muted/40 transition-all duration-200",
+                            i !== arr.length - 1 && "border-b border-border",
+                            i % 2 === 1 && "bg-muted/10"
                           )}
+                          style={{ animation: `fade-in 0.4s ease-out ${i * 80}ms both` }}
                         >
-                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20 shrink-0">
-                            <span className="text-sm font-semibold text-primary">{initials}</span>
+                          <div className="relative shrink-0">
+                            {i === 0 && (
+                              <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+                                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary" />
+                              </span>
+                            )}
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20">
+                              <span className="text-sm font-semibold text-primary">{initials}</span>
+                            </div>
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-semibold truncate">{bid.bidderName}</p>
                             <p className="text-xs text-muted-foreground truncate">on {auction?.title}</p>
                           </div>
-                          <span className="font-mono text-sm font-bold text-primary shrink-0">₹{bid.amount.toLocaleString()}</span>
+                          <span className="font-mono text-sm font-bold bg-gradient-to-br from-primary to-amber-400 bg-clip-text text-transparent shrink-0">₹{bid.amount.toLocaleString()}</span>
                         </div>
                       );
                     })
