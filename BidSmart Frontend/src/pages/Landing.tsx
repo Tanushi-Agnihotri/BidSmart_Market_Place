@@ -37,7 +37,7 @@ const Landing = () => {
     <div className="animate-fade-in">
 
       {/* ═══════════ HERO ═══════════ */}
-      <section className="relative min-h-[92vh] flex items-center overflow-hidden">
+      <section className="relative min-h-screen flex items-center overflow-hidden">
         <div className="absolute inset-0">
           <img src={heroImg} alt="Luxury auction" className="h-full w-full object-cover animate-hero-zoom" />
           <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/70 to-black/30" />
