@@ -1,12 +1,30 @@
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { MdOutlineArrowBack as ArrowLeft, MdOutlineCloudUpload as Upload, MdOutlineAddPhotoAlternate as ImagePlus, MdOutlineClose as X, MdOutlineSave as Save, MdOutlineVisibility as Eye, MdOutlineSync as Loader2, MdOutlineSchedule as Schedule, MdOutlinePlayArrow as PlayArrow, MdOutlineCalendarToday as CalendarIcon, MdOutlineAccessTime as ClockIcon, MdOutlineStar as Star, MdOutlineStarBorder as StarBorder, MdOutlineInfo as Info, MdOutlineCurrencyRupee as RupeeSign, MdOutlinePhotoLibrary as PhotoLibrary, MdOutlineCategory as CategoryIcon } from 'react-icons/md';
+import {
+  MdOutlineArrowBack as ArrowLeft,
+  MdOutlineAddPhotoAlternate as ImagePlus,
+  MdOutlineClose as X,
+  MdOutlineSave as Save,
+  MdOutlineSync as Loader2,
+  MdOutlineSchedule as Schedule,
+  MdOutlinePlayArrow as PlayArrow,
+  MdOutlineCalendarToday as CalendarIcon,
+  MdOutlineAccessTime as ClockIcon,
+  MdOutlineStar as Star,
+  MdOutlineStarBorder as StarBorder,
+  MdOutlineInfo as Info,
+  MdOutlineCurrencyRupee as RupeeSign,
+  MdOutlinePhotoLibrary as PhotoLibrary,
+  MdOutlineCategory as CategoryIcon,
+  MdOutlineStorefront as StorefrontIcon,
+  MdOutlineCheckCircle as CheckCircle,
+  MdOutlineTrendingUp as TrendingUp,
+  MdOutlineTimer as TimerIcon,
+} from 'react-icons/md';
 import { useApp } from '@/context/AppContext';
-
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { categories } from '@/data/mockData';
 import { toast } from 'sonner';
@@ -16,29 +34,22 @@ import SellerAccessGate from '@/components/shared/SellerAccessGate';
 
 const conditions = ['New', 'Like New', 'Excellent', 'Very Good', 'Good', 'Fair', 'Restored'];
 const presetDurations = [
-  { label: '1 Hour', hours: 1 },
-  { label: '6 Hours', hours: 6 },
-  { label: '12 Hours', hours: 12 },
+  { label: '1 Hr', hours: 1 },
+  { label: '6 Hrs', hours: 6 },
+  { label: '12 Hrs', hours: 12 },
   { label: '1 Day', hours: 24 },
   { label: '3 Days', hours: 72 },
   { label: '5 Days', hours: 120 },
   { label: '7 Days', hours: 168 },
-  { label: '10 Days', hours: 240 },
   { label: '14 Days', hours: 336 },
   { label: '30 Days', hours: 720 },
 ];
 
-type PendingImage = {
-  file: File;
-  preview: string;
-};
+type PendingImage = { file: File; preview: string };
 
-// Get min date string (today)
 const getMinDate = () => new Date().toISOString().slice(0, 10);
-// Get max date string (30 days from now)
 const getMaxDate = () => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
-// Generate time slots in 30-minute intervals
 const timeSlots: { value: string; label: string }[] = [];
 for (let h = 0; h < 24; h++) {
   for (const m of [0, 30]) {
@@ -46,10 +57,7 @@ for (let h = 0; h < 24; h++) {
     const mm = String(m).padStart(2, '0');
     const ampm = h >= 12 ? 'PM' : 'AM';
     const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
-    timeSlots.push({
-      value: `${hh}:${mm}`,
-      label: `${h12}:${mm} ${ampm}`,
-    });
+    timeSlots.push({ value: `${hh}:${mm}`, label: `${h12}:${mm} ${ampm}` });
   }
 }
 
@@ -77,8 +85,8 @@ const AddEditProduct = () => {
   const [scheduledTimeStr, setScheduledTimeStr] = useState('12:00');
   const [existingImages, setExistingImages] = useState<string[]>(existing?.images || []);
   const [pendingImages, setPendingImages] = useState<PendingImage[]>([]);
-  const [coverIndex, setCoverIndex] = useState(0); // index in the combined (existing + pending) list
-  const [uploadingImage, setUploadingImage] = useState(false);
+  const [coverIndex, setCoverIndex] = useState(0);
+  const [submitting, setSubmitting] = useState(false);
 
   const totalImages = existingImages.length + pendingImages.length;
 
@@ -87,18 +95,14 @@ const AddEditProduct = () => {
       <SellerAccessGate
         feature={id ? 'Edit Product' : 'List a Product'}
         description={id
-          ? 'Editing a product listing is a seller-only action — you can only edit items you have listed.'
+          ? 'Editing a product listing is a seller-only action.'
           : 'Listing a product is a seller-only action — set your base price, upload photos, and start receiving bids.'}
       />
     );
   }
 
-  const [submitting, setSubmitting] = useState(false);
-
   const getDurationHours = (): number => {
-    if (durationMode === 'preset') {
-      return parseInt(presetDuration);
-    }
+    if (durationMode === 'preset') return parseInt(presetDuration);
     const days = parseInt(customDurationDays || '0');
     const hours = parseInt(customDurationHours || '0');
     return days * 24 + hours;
@@ -110,89 +114,50 @@ const AddEditProduct = () => {
       toast.error('Please fill in all required fields.');
       return;
     }
-
     const durationHours = getDurationHours();
-    if (durationHours < 1) {
-      toast.error('Auction duration must be at least 1 hour.');
-      return;
-    }
-    if (durationHours > 720) {
-      toast.error('Auction duration cannot exceed 30 days (720 hours).');
-      return;
-    }
-
-    if (startMode === 'scheduled' && !scheduledDateStr) {
-      toast.error('Please select a start date for the scheduled auction.');
-      return;
-    }
-
+    if (durationHours < 1) { toast.error('Auction duration must be at least 1 hour.'); return; }
+    if (durationHours > 720) { toast.error('Auction duration cannot exceed 30 days.'); return; }
+    if (startMode === 'scheduled' && !scheduledDateStr) { toast.error('Please select a start date.'); return; }
     if (startMode === 'scheduled') {
       const scheduled = new Date(`${scheduledDateStr}T${scheduledTimeStr}`);
-      if (scheduled.getTime() <= Date.now()) {
-        toast.error('Scheduled start time must be in the future.');
-        return;
-      }
+      if (scheduled.getTime() <= Date.now()) { toast.error('Scheduled start time must be in the future.'); return; }
     }
-
-    if (!authToken) {
-      toast.error('Please sign in with your account to list products. Demo mode does not support this.');
-      return;
-    }
+    if (!authToken) { toast.error('Please sign in to list products.'); return; }
 
     setSubmitting(true);
     try {
       let auctionId = id;
-
       if (isEdit && id) {
-        await auctionApi.update(id, {
-          title, category, description, condition,
-          basePrice: parseFloat(basePrice),
-          bidIncrement: parseFloat(bidIncrement),
-        });
+        await auctionApi.update(id, { title, category, description, condition, basePrice: parseFloat(basePrice), bidIncrement: parseFloat(bidIncrement) });
       } else {
         const createData: Parameters<typeof auctionApi.create>[0] = {
           title, category, description, condition,
-          basePrice: parseFloat(basePrice),
-          bidIncrement: parseFloat(bidIncrement),
-          durationHours,
+          basePrice: parseFloat(basePrice), bidIncrement: parseFloat(bidIncrement), durationHours,
         };
-
         if (startMode === 'scheduled' && scheduledDateStr) {
           createData.scheduledStartTime = new Date(`${scheduledDateStr}T${scheduledTimeStr}`).toISOString();
         }
-
         const created = await auctionApi.create(createData);
         auctionId = created.id;
       }
-
-      // Upload pending images in parallel, cover image first
       if (auctionId && pendingImages.length > 0) {
-        // Reorder: put cover image first so it gets sortOrder 0
         const coverPendingIdx = coverIndex - existingImages.length;
         const orderedPending = [...pendingImages];
         if (coverPendingIdx >= 0 && coverPendingIdx < orderedPending.length) {
           const [cover] = orderedPending.splice(coverPendingIdx, 1);
           orderedPending.unshift(cover);
         }
-        const results = await Promise.allSettled(
-          orderedPending.map(img => imageApi.upload(auctionId, img.file))
-        );
+        const results = await Promise.allSettled(orderedPending.map(img => imageApi.upload(auctionId, img.file)));
         const uploaded = results.filter(r => r.status === 'fulfilled').length;
-        const failed = results.filter(r => r.status === 'rejected');
-        if (uploaded > 0) {
-          toast.success(`${uploaded} image${uploaded > 1 ? 's' : ''} uploaded!`);
-        }
-        if (failed.length > 0) {
-          toast.error(`${failed.length} image${failed.length > 1 ? 's' : ''} failed to upload.`);
-        }
+        const failed = results.filter(r => r.status === 'rejected').length;
+        if (uploaded > 0) toast.success(`${uploaded} image${uploaded > 1 ? 's' : ''} uploaded!`);
+        if (failed > 0) toast.error(`${failed} image${failed > 1 ? 's' : ''} failed to upload.`);
       }
-
-      toast.success(isEdit ? 'Product updated successfully!' : startMode === 'scheduled' ? 'Auction scheduled successfully!' : 'Product listed successfully!');
+      toast.success(isEdit ? 'Product updated!' : startMode === 'scheduled' ? 'Auction scheduled!' : 'Product listed!');
       await refreshAuctions();
       navigate('/seller/products');
     } catch (err) {
-      const message = err instanceof ApiError ? err.message : 'Failed to save product';
-      toast.error(message);
+      toast.error(err instanceof ApiError ? err.message : 'Failed to save product');
     } finally {
       setSubmitting(false);
     }
@@ -201,637 +166,431 @@ const AddEditProduct = () => {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
-
     const remaining = 5 - totalImages;
-    if (remaining <= 0) {
-      toast.error('Maximum 5 images allowed.');
-      return;
-    }
-
-    const newFiles = Array.from(files).slice(0, remaining);
+    if (remaining <= 0) { toast.error('Maximum 5 images allowed.'); return; }
     const newPending: PendingImage[] = [];
-
-    for (const file of newFiles) {
-      if (!file.type.startsWith('image/')) {
-        toast.error(`${file.name} is not an image file.`);
-        continue;
-      }
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error(`${file.name} exceeds 5MB limit.`);
-        continue;
-      }
-      newPending.push({
-        file,
-        preview: URL.createObjectURL(file),
-      });
+    for (const file of Array.from(files).slice(0, remaining)) {
+      if (!file.type.startsWith('image/')) { toast.error(`${file.name} is not an image.`); continue; }
+      if (file.size > 5 * 1024 * 1024) { toast.error(`${file.name} exceeds 5MB.`); continue; }
+      newPending.push({ file, preview: URL.createObjectURL(file) });
     }
-
     setPendingImages(prev => [...prev, ...newPending]);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const removePendingImage = (idx: number) => {
-    setPendingImages(prev => {
-      const removed = prev[idx];
-      URL.revokeObjectURL(removed.preview);
-      return prev.filter((_, i) => i !== idx);
-    });
+    setPendingImages(prev => { URL.revokeObjectURL(prev[idx].preview); return prev.filter((_, i) => i !== idx); });
   };
 
-  const removeExistingImage = (idx: number) => {
-    setExistingImages(prev => prev.filter((_, i) => i !== idx));
-  };
-
-  // Compute summary for the duration + schedule section
   const durationHoursSummary = getDurationHours();
-  const durationLabel = durationHoursSummary <= 0
-    ? null
+  const durationLabel = durationHoursSummary <= 0 ? null
     : durationHoursSummary >= 24
-      ? `${Math.floor(durationHoursSummary / 24)} day${Math.floor(durationHoursSummary / 24) > 1 ? 's' : ''}${durationHoursSummary % 24 > 0 ? ` ${durationHoursSummary % 24} hour${durationHoursSummary % 24 > 1 ? 's' : ''}` : ''}`
-      : `${durationHoursSummary} hour${durationHoursSummary > 1 ? 's' : ''}`;
-  const scheduleSummary = (() => {
-    const durationPart = durationLabel ? `runs for ${durationLabel}` : 'set a duration (min 1 hour)';
-    if (startMode === 'now') {
-      return `Starts immediately, ${durationPart}`;
-    }
-    if (scheduledDateStr) {
-      const d = new Date(`${scheduledDateStr}T${scheduledTimeStr}`);
-      return `Starts ${d.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}, ${durationPart}`;
-    }
-    return `Select a start date — ${durationPart}`;
+      ? `${Math.floor(durationHoursSummary / 24)}d${durationHoursSummary % 24 > 0 ? ` ${durationHoursSummary % 24}h` : ''}`
+      : `${durationHoursSummary}h`;
+
+  const coverImageSrc = (() => {
+    const allImgs = [...existingImages, ...pendingImages.map(p => p.preview)];
+    return allImgs[coverIndex] || null;
   })();
 
-  // Section icon helper
-  const SectionIcon = ({ icon: Icon, delay }: { icon: React.ElementType; delay?: string }) => (
-    <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20 shadow-sm transition-transform duration-300 group-hover:scale-110", delay && `animate-float-up ${delay}`)}>
-      <Icon className="h-4.5 w-4.5 text-primary" />
-    </div>
-  );
-
   return (
-    <div className="relative min-h-screen overflow-hidden pt-24 pb-20 animate-fade-in">
+    <div className="relative min-h-screen overflow-hidden animate-fade-in">
       {/* Decorative background */}
-      <div className="pointer-events-none absolute inset-0 bg-floating-orbs opacity-60" />
-      <div className="pointer-events-none absolute inset-0 bg-lines-pattern opacity-30" />
+      <div className="pointer-events-none absolute inset-0 bg-floating-orbs opacity-40" />
+      <div className="pointer-events-none absolute inset-0 bg-lines-pattern opacity-20" />
+      <div className="pointer-events-none absolute -top-40 right-0 h-[500px] w-[500px] rounded-full bg-primary/6 blur-[120px]" />
+      <div className="pointer-events-none absolute bottom-0 left-0 h-[400px] w-[400px] rounded-full bg-violet-500/4 blur-[100px]" />
 
-      {/* Decorative gradient orbs */}
-      <div className="pointer-events-none absolute -top-40 -right-40 h-[500px] w-[500px] rounded-full bg-primary/8 blur-[120px]" />
-      <div className="pointer-events-none absolute top-1/3 -left-32 h-[400px] w-[400px] rounded-full bg-violet-500/5 blur-[100px]" />
-      <div className="pointer-events-none absolute bottom-20 right-1/4 h-[350px] w-[350px] rounded-full bg-emerald-500/5 blur-[100px]" />
+      <div className="relative flex min-h-screen">
+        {/* ── LEFT PANEL ── sticky info sidebar */}
+        <div className="hidden lg:flex flex-col w-80 xl:w-96 shrink-0 sticky top-0 h-screen pt-16 pb-6 px-6 xl:px-8 border-r border-border/50 bg-card/50 backdrop-blur-sm">
+          {/* Back button */}
+          <button
+            type="button"
+            onClick={() => navigate('/seller/products')}
+            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group mb-8 mt-4"
+          >
+            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
+            Back to Products
+          </button>
 
-      <div className="relative container mx-auto px-4 max-w-3xl">
-        {/* Hero header */}
-        <div className="relative overflow-hidden rounded-3xl p-[1px] bg-gradient-to-br from-primary/50 via-primary/20 to-border shadow-card mb-8 animate-float-up">
-          {/* Shimmer overlay */}
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent rounded-3xl" style={{ animation: 'shimmer 4s ease-in-out infinite', backgroundSize: '200% 100%' }} />
+          {/* Title */}
+          <div className="mb-8">
+            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Seller Zone</span>
+            <h1 className="font-display text-2xl xl:text-3xl font-bold tracking-tight mt-1 bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-transparent">
+              {isEdit ? 'Edit Product' : 'Add New Product'}
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1.5">
+              {isEdit ? 'Update your listing details.' : 'List your item for auction.'}
+            </p>
+          </div>
 
-          <div className="relative rounded-3xl bg-card/90 backdrop-blur-sm p-6 md:p-8">
-            {/* Subtle gradient accent */}
-            <div className="absolute top-0 right-0 h-32 w-32 bg-gradient-to-bl from-primary/10 to-transparent rounded-bl-full" />
+          {/* Cover image preview */}
+          <div className="relative overflow-hidden rounded-2xl border border-border bg-muted/30 aspect-square mb-6 group">
+            {coverImageSrc ? (
+              <img src={coverImageSrc} alt="Cover preview" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+            ) : (
+              <div className="w-full h-full flex flex-col items-center justify-center gap-3">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/15">
+                  <PhotoLibrary className="h-7 w-7 text-primary/50" />
+                </div>
+                <p className="text-xs text-muted-foreground text-center px-4">Cover photo will appear here</p>
+              </div>
+            )}
+            {coverImageSrc && (
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
+                <span className="text-xs text-white font-medium">Cover Photo</span>
+              </div>
+            )}
+          </div>
 
-            <div className="relative flex items-start gap-4">
-              <button
-                type="button"
-                onClick={() => navigate('/seller/products')}
-                className="shrink-0 flex h-11 w-11 items-center justify-center rounded-xl border border-border bg-muted/50 text-muted-foreground hover:text-foreground hover:bg-muted hover:border-primary/30 transition-all mt-1 group"
-              >
-                <ArrowLeft className="h-5 w-5 transition-transform group-hover:-translate-x-0.5" />
-              </button>
-              <div>
-                <span className="inline-block text-xs font-semibold uppercase tracking-[0.2em] text-primary mb-1">
-                  Seller Zone
-                </span>
-                <h1 className="font-display text-3xl md:text-4xl font-bold tracking-tight bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">
-                  {isEdit ? 'Edit Product' : 'Add New Product'}
-                </h1>
-                <p className="text-sm md:text-base text-muted-foreground mt-1">
-                  {isEdit ? 'Update your listing details below.' : 'Fill in the details to list your item for auction.'}
-                </p>
+          {/* Live preview card */}
+          <div className="rounded-xl border border-border/50 bg-card/80 p-4 space-y-3">
+            <p className="text-xs uppercase tracking-wider font-semibold text-muted-foreground">Live Preview</p>
+            <div>
+              <p className="font-semibold text-sm truncate">{title || <span className="text-muted-foreground/50 font-normal">Product title...</span>}</p>
+              <div className="flex items-center gap-2 mt-1">
+                {category && <span className="text-xs text-muted-foreground bg-muted rounded-md px-1.5 py-0.5">{category}</span>}
+                {condition && <span className="text-xs text-muted-foreground bg-muted rounded-md px-1.5 py-0.5">{condition}</span>}
               </div>
             </div>
+            {basePrice && (
+              <div className="flex items-center justify-between border-t border-border/50 pt-3">
+                <span className="text-xs text-muted-foreground">Starting bid</span>
+                <span className="font-mono font-bold text-primary text-sm">₹{parseFloat(basePrice).toLocaleString()}</span>
+              </div>
+            )}
+            {bidIncrement && (
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Min. increment</span>
+                <span className="font-mono text-xs text-foreground">₹{parseFloat(bidIncrement).toLocaleString()}</span>
+              </div>
+            )}
+            {durationLabel && (
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Duration</span>
+                <span className="text-xs font-medium text-foreground">{durationLabel}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Tips */}
+          <div className="mt-auto space-y-2">
+            {[
+              { icon: PhotoLibrary, text: 'Upload up to 5 clear photos' },
+              { icon: TrendingUp, text: 'Competitive starting price gets more bids' },
+              { icon: TimerIcon, text: '7-day auctions perform best' },
+            ].map(({ icon: Icon, text }) => (
+              <div key={text} className="flex items-center gap-2.5 text-xs text-muted-foreground">
+                <Icon className="h-3.5 w-3.5 text-primary/60 shrink-0" />
+                {text}
+              </div>
+            ))}
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Basic Info */}
-          <div className="group relative overflow-hidden rounded-2xl p-[1px] bg-gradient-to-br from-primary/30 via-border to-border shadow-card animate-float-up delay-100">
-            <div className="rounded-2xl bg-card/90 backdrop-blur-sm p-6">
-              <div className="flex items-center gap-3 mb-1">
-                <SectionIcon icon={CategoryIcon} />
-                <div>
-                  <h2 className="font-display text-lg font-semibold">Basic Information</h2>
-                  <p className="text-sm text-muted-foreground">Title, category, and condition of your item.</p>
-                </div>
-              </div>
-              <div className="mt-5 space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="title">Title *</Label>
-                  <Input id="title" value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Vintage Rolex Submariner 1968" className="h-11" />
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Category *</Label>
-                    <Select value={category} onValueChange={setCategory}>
-                      <SelectTrigger className="h-11"><SelectValue placeholder="Select category" /></SelectTrigger>
-                      <SelectContent>
-                        {categories.map(c => (
-                          <SelectItem key={c.name} value={c.name}>
-                            <div className="flex items-center gap-2">
-                              {c.icon}
-                              <span>{c.name}</span>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Condition *</Label>
-                    <Select value={condition} onValueChange={setCondition}>
-                      <SelectTrigger className="h-11"><SelectValue placeholder="Select condition" /></SelectTrigger>
-                      <SelectContent>
-                        {conditions.map(c => (
-                          <SelectItem key={c} value={c}>{c}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    value={description}
-                    onChange={e => setDescription(e.target.value)}
-                    placeholder="Describe your item in detail — condition, history, provenance..."
-                    rows={4}
-                    className="resize-none"
-                  />
-                </div>
-              </div>
+        {/* ── RIGHT PANEL ── scrollable form */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="max-w-3xl mx-auto px-4 sm:px-8 pt-20 pb-16">
+
+            {/* Mobile header */}
+            <div className="lg:hidden mb-6">
+              <button
+                type="button"
+                onClick={() => navigate('/seller/products')}
+                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group mb-4"
+              >
+                <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
+                Back to Products
+              </button>
+              <span className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Seller Zone</span>
+              <h1 className="font-display text-2xl font-bold tracking-tight mt-0.5">{isEdit ? 'Edit Product' : 'Add New Product'}</h1>
             </div>
-          </div>
 
-          {/* Images */}
-          <div className="group relative overflow-hidden rounded-2xl p-[1px] bg-gradient-to-br from-primary/30 via-border to-border shadow-card animate-float-up delay-200">
-            <div className="rounded-2xl bg-card/90 backdrop-blur-sm p-6">
-              <div className="flex items-center gap-3 mb-1">
-                <SectionIcon icon={PhotoLibrary} />
-                <div>
-                  <h2 className="font-display text-lg font-semibold">Product Images</h2>
-                  <p className="text-sm text-muted-foreground">Upload up to 5 high-quality photos. Click the star to set the cover photo.</p>
-                </div>
-              </div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif"
-                multiple
-                className="hidden"
-                onChange={handleFileSelect}
-              />
-              <div className="mt-5 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-                {existingImages.map((img, idx) => {
-                  const isCover = idx === coverIndex;
-                  return (
-                    <div
-                      key={`existing-${idx}`}
-                      className={cn(
-                        "relative group/img aspect-square rounded-xl overflow-hidden border-2 transition-all cursor-pointer hover:shadow-md",
-                        isCover ? "border-primary ring-2 ring-primary/20 shadow-md" : "border-border hover:border-primary/40"
-                      )}
-                      onClick={() => setCoverIndex(idx)}
-                    >
-                      <img src={img} alt={`Product ${idx + 1}`} className="w-full h-full object-cover transition-transform duration-300 group-hover/img:scale-105" />
-                      {/* Cover badge */}
-                      {isCover && (
-                        <div className="absolute top-1.5 left-1.5 rounded-full bg-primary px-2 py-0.5 flex items-center gap-1 shadow-sm">
-                          <Star className="h-3 w-3 text-primary-foreground fill-primary-foreground" />
-                          <span className="text-sm font-bold text-primary-foreground">Cover</span>
-                        </div>
-                      )}
-                      {/* Star icon on hover */}
-                      {!isCover && (
-                        <button
-                          type="button"
-                          onClick={(e) => { e.stopPropagation(); setCoverIndex(idx); }}
-                          className="absolute top-1.5 left-1.5 rounded-full bg-black/50 backdrop-blur-sm p-1 opacity-0 group-hover/img:opacity-100 transition-opacity"
-                          title="Set as cover photo"
-                        >
-                          <StarBorder className="h-3.5 w-3.5 text-white" />
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removeExistingImage(idx);
-                          if (coverIndex >= existingImages.length - 1 + pendingImages.length) setCoverIndex(0);
-                          else if (idx < coverIndex) setCoverIndex(prev => prev - 1);
-                          else if (idx === coverIndex) setCoverIndex(0);
-                        }}
-                        className="absolute top-1.5 right-1.5 rounded-full bg-black/50 backdrop-blur-sm p-1 opacity-0 group-hover/img:opacity-100 transition-opacity hover:bg-destructive/80"
-                      >
-                        <X className="h-3.5 w-3.5 text-white" />
-                      </button>
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {/* ── Basic Info ── */}
+              <div className="relative overflow-hidden rounded-2xl p-[1px] bg-gradient-to-br from-primary/25 via-border to-border shadow-sm animate-float-up delay-100">
+                <div className="rounded-2xl bg-card/95 backdrop-blur-sm p-5 sm:p-6">
+                  <div className="flex items-center gap-3 mb-5">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20">
+                      <CategoryIcon className="h-4.5 w-4.5 text-primary" />
                     </div>
-                  );
-                })}
-                {pendingImages.map((img, idx) => {
-                  const combinedIdx = existingImages.length + idx;
-                  const isCover = combinedIdx === coverIndex;
-                  return (
-                    <div
-                      key={`pending-${idx}`}
-                      className={cn(
-                        "relative group/img aspect-square rounded-xl overflow-hidden border-2 transition-all cursor-pointer hover:shadow-md",
-                        isCover ? "border-primary ring-2 ring-primary/20 shadow-md" : "border-primary/30 hover:border-primary/50"
-                      )}
-                      onClick={() => setCoverIndex(combinedIdx)}
-                    >
-                      <img src={img.preview} alt={`New ${idx + 1}`} className="w-full h-full object-cover transition-transform duration-300 group-hover/img:scale-105" />
-                      {/* Cover badge */}
-                      {isCover ? (
-                        <div className="absolute top-1.5 left-1.5 rounded-full bg-primary px-2 py-0.5 flex items-center gap-1 shadow-sm">
-                          <Star className="h-3 w-3 text-primary-foreground fill-primary-foreground" />
-                          <span className="text-sm font-bold text-primary-foreground">Cover</span>
-                        </div>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={(e) => { e.stopPropagation(); setCoverIndex(combinedIdx); }}
-                          className="absolute top-1.5 left-1.5 rounded-full bg-black/50 backdrop-blur-sm p-1 opacity-0 group-hover/img:opacity-100 transition-opacity"
-                          title="Set as cover photo"
-                        >
-                          <StarBorder className="h-3.5 w-3.5 text-white" />
-                        </button>
-                      )}
-                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-primary/90 to-primary/60 text-primary-foreground text-xs text-center py-1 font-medium backdrop-blur-[2px]">
-                        Pending upload
-                      </div>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removePendingImage(idx);
-                          if (coverIndex >= existingImages.length + pendingImages.length - 1) setCoverIndex(0);
-                          else if (combinedIdx < coverIndex) setCoverIndex(prev => prev - 1);
-                          else if (combinedIdx === coverIndex) setCoverIndex(0);
-                        }}
-                        className="absolute top-1.5 right-1.5 rounded-full bg-black/50 backdrop-blur-sm p-1 opacity-0 group-hover/img:opacity-100 transition-opacity hover:bg-destructive/80"
-                      >
-                        <X className="h-3.5 w-3.5 text-white" />
-                      </button>
+                    <div>
+                      <h2 className="font-semibold text-base">Basic Information</h2>
+                      <p className="text-xs text-muted-foreground">Title, category, and condition</p>
                     </div>
-                  );
-                })}
-                {totalImages < 5 && (
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="aspect-square rounded-xl border-2 border-dashed border-border hover:border-primary/50 hover:bg-primary/5 flex flex-col items-center justify-center gap-1.5 text-muted-foreground hover:text-primary transition-all group/add"
-                  >
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted/80 group-hover/add:bg-primary/10 transition-colors">
-                      <ImagePlus className="h-5 w-5" />
+                  </div>
+                  <div className="space-y-4">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="title" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Title *</Label>
+                      <Input id="title" value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Vintage Rolex Submariner 1968" className="h-10" />
                     </div>
-                    <span className="text-xs font-medium">Add Photo</span>
-                  </button>
-                )}
-              </div>
-              {totalImages > 0 && (
-                <div className="flex items-center gap-2 mt-3">
-                  <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-primary to-primary/70 transition-all duration-500"
-                      style={{ width: `${(totalImages / 5) * 100}%` }}
-                    />
-                  </div>
-                  <span className="text-xs font-mono text-muted-foreground font-medium">{totalImages}/5</span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Pricing */}
-          <div className="group relative overflow-hidden rounded-2xl p-[1px] bg-gradient-to-br from-primary/30 via-border to-border shadow-card animate-float-up delay-300">
-            <div className="rounded-2xl bg-card/90 backdrop-blur-sm p-6">
-              <div className="flex items-center gap-3 mb-1">
-                <SectionIcon icon={RupeeSign} />
-                <div>
-                  <h2 className="font-display text-lg font-semibold">Pricing</h2>
-                  <p className="text-sm text-muted-foreground">Set your starting price and bid increment.</p>
-                </div>
-              </div>
-              <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="base-price">Starting Price (₹) *</Label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-mono text-sm">₹</span>
-                    <Input
-                      id="base-price"
-                      type="number"
-                      min="1"
-                      value={basePrice}
-                      onChange={e => setBasePrice(e.target.value)}
-                      placeholder="0.00"
-                      className="h-11 pl-7 font-mono"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="bid-increment">Bid Increment (₹) *</Label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-mono text-sm">₹</span>
-                    <Input
-                      id="bid-increment"
-                      type="number"
-                      min="1"
-                      value={bidIncrement}
-                      onChange={e => setBidIncrement(e.target.value)}
-                      placeholder="0.00"
-                      className="h-11 pl-7 font-mono"
-                    />
-                  </div>
-                </div>
-              </div>
-              {basePrice && bidIncrement && (
-                <div className="mt-4 rounded-xl bg-primary/5 border border-primary/15 p-3 flex items-start gap-2 animate-fade-in">
-                  <Info className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                  <p className="text-sm text-muted-foreground">
-                    Bidding starts at <span className="font-mono font-semibold text-foreground">₹{parseFloat(basePrice).toLocaleString()}</span> with
-                    minimum increments of <span className="font-mono font-semibold text-foreground">₹{parseFloat(bidIncrement).toLocaleString()}</span>
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Scheduling & Duration */}
-          {!isEdit && (
-            <div className="group relative overflow-hidden rounded-2xl p-[1px] bg-gradient-to-br from-primary/30 via-border to-border shadow-card animate-float-up delay-400">
-              <div className="rounded-2xl bg-card/90 backdrop-blur-sm p-6">
-                <div className="flex items-center gap-3 mb-1">
-                  <SectionIcon icon={Schedule} />
-                  <div>
-                    <h2 className="font-display text-lg font-semibold">Schedule & Duration</h2>
-                    <p className="text-sm text-muted-foreground">Choose when your auction starts and how long it runs.</p>
-                  </div>
-                </div>
-                <div className="mt-5 space-y-6">
-                {/* Start Time Toggle */}
-                <div className="space-y-3">
-                  <Label>When should the auction start?</Label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setStartMode('now')}
-                      className={cn(
-                        "flex items-center gap-3 rounded-xl border-2 p-4 transition-all text-left",
-                        startMode === 'now'
-                          ? "border-primary bg-primary/5 shadow-sm"
-                          : "border-border hover:border-primary/30"
-                      )}
-                    >
-                      <div className={cn(
-                        "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors",
-                        startMode === 'now' ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"
-                      )}>
-                        <PlayArrow className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <p className="text-base font-semibold">Start Now</p>
-                        <p className="text-sm text-muted-foreground">Goes live immediately</p>
-                      </div>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setStartMode('scheduled')}
-                      className={cn(
-                        "flex items-center gap-3 rounded-xl border-2 p-4 transition-all text-left",
-                        startMode === 'scheduled'
-                          ? "border-primary bg-primary/5 shadow-sm"
-                          : "border-border hover:border-primary/30"
-                      )}
-                    >
-                      <div className={cn(
-                        "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors",
-                        startMode === 'scheduled' ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"
-                      )}>
-                        <Schedule className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <p className="text-base font-semibold">Schedule</p>
-                        <p className="text-sm text-muted-foreground">Pick a future date & time</p>
-                      </div>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Scheduled Date-Time Picker */}
-                {startMode === 'scheduled' && (
-                  <div className="space-y-4 animate-fade-in">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {/* Date Picker */}
-                      <div className="space-y-2">
-                        <Label htmlFor="scheduled-date" className="flex items-center gap-1.5">
-                          <CalendarIcon className="h-3.5 w-3.5 text-muted-foreground" />
-                          Date *
-                        </Label>
-                        <Input
-                          id="scheduled-date"
-                          type="date"
-                          value={scheduledDateStr}
-                          onChange={e => setScheduledDateStr(e.target.value)}
-                          min={getMinDate()}
-                          max={getMaxDate()}
-                          className="font-mono h-11"
-                        />
-                      </div>
-                      {/* Time Picker */}
-                      <div className="space-y-2">
-                        <Label className="flex items-center gap-1.5">
-                          <ClockIcon className="h-3.5 w-3.5 text-muted-foreground" />
-                          Time *
-                        </Label>
-                        <Select value={scheduledTimeStr} onValueChange={setScheduledTimeStr}>
-                          <SelectTrigger className="font-mono h-11">
-                            <SelectValue placeholder="Select time" />
-                          </SelectTrigger>
-                          <SelectContent className="max-h-60">
-                            {timeSlots.map(slot => (
-                              <SelectItem key={slot.value} value={slot.value}>
-                                {slot.label}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Category *</Label>
+                        <Select value={category} onValueChange={setCategory}>
+                          <SelectTrigger className="h-10"><SelectValue placeholder="Select" /></SelectTrigger>
+                          <SelectContent>
+                            {categories.map(c => (
+                              <SelectItem key={c.name} value={c.name}>
+                                <div className="flex items-center gap-2">{c.icon}<span>{c.name}</span></div>
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                       </div>
-                    </div>
-                    {scheduledDateStr && (
-                      <div className="rounded-xl bg-primary/5 border border-primary/20 p-3 flex items-start gap-2">
-                        <Schedule className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                        <p className="text-base text-foreground">
-                          Auction will go live on{' '}
-                          <span className="font-semibold">
-                            {new Date(`${scheduledDateStr}T${scheduledTimeStr}`).toLocaleString('en-US', {
-                              weekday: 'short',
-                              month: 'long',
-                              day: 'numeric',
-                              year: 'numeric',
-                              hour: 'numeric',
-                              minute: '2-digit',
-                            })}
-                          </span>
-                        </p>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Condition *</Label>
+                        <Select value={condition} onValueChange={setCondition}>
+                          <SelectTrigger className="h-10"><SelectValue placeholder="Select" /></SelectTrigger>
+                          <SelectContent>
+                            {conditions.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
                       </div>
-                    )}
-                    {!scheduledDateStr && (
-                      <p className="text-sm text-muted-foreground">
-                        Auction will remain in "Upcoming" status until the scheduled time, then automatically go live.
-                      </p>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="description" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Description</Label>
+                      <Textarea
+                        id="description"
+                        value={description}
+                        onChange={e => setDescription(e.target.value)}
+                        placeholder="Describe your item — condition, history, provenance..."
+                        rows={3}
+                        className="resize-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* ── Images ── */}
+              <div className="relative overflow-hidden rounded-2xl p-[1px] bg-gradient-to-br from-primary/25 via-border to-border shadow-sm animate-float-up delay-200">
+                <div className="rounded-2xl bg-card/95 backdrop-blur-sm p-5 sm:p-6">
+                  <div className="flex items-center gap-3 mb-5">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20">
+                      <PhotoLibrary className="h-4.5 w-4.5 text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <h2 className="font-semibold text-base">Product Images</h2>
+                      <p className="text-xs text-muted-foreground">Up to 5 photos — click ★ to set cover</p>
+                    </div>
+                    {totalImages > 0 && (
+                      <span className="text-xs font-mono text-muted-foreground bg-muted rounded-full px-2 py-0.5">{totalImages}/5</span>
                     )}
                   </div>
-                )}
-
-                <div className="h-px bg-border" />
-
-                {/* Duration */}
-                <div className="space-y-3">
-                  <Label>How long should the auction run?</Label>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setDurationMode('preset')}
-                      className={cn(
-                        "rounded-lg px-3 py-1.5 text-sm font-medium transition-all",
-                        durationMode === 'preset' ? "bg-primary text-primary-foreground shadow-sm" : "bg-muted text-muted-foreground hover:text-foreground"
-                      )}
-                    >
-                      Preset
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setDurationMode('custom')}
-                      className={cn(
-                        "rounded-lg px-3 py-1.5 text-sm font-medium transition-all",
-                        durationMode === 'custom' ? "bg-primary text-primary-foreground shadow-sm" : "bg-muted text-muted-foreground hover:text-foreground"
-                      )}
-                    >
-                      Custom
-                    </button>
+                  <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple className="hidden" onChange={handleFileSelect} />
+                  <div className="grid grid-cols-3 sm:grid-cols-5 gap-2.5">
+                    {existingImages.map((img, idx) => {
+                      const isCover = idx === coverIndex;
+                      return (
+                        <div key={`ex-${idx}`} className={cn("relative group/img aspect-square rounded-xl overflow-hidden border-2 cursor-pointer transition-all", isCover ? "border-primary ring-2 ring-primary/20" : "border-border hover:border-primary/40")} onClick={() => setCoverIndex(idx)}>
+                          <img src={img} className="w-full h-full object-cover transition-transform duration-300 group-hover/img:scale-105" />
+                          {isCover
+                            ? <div className="absolute top-1 left-1 rounded-full bg-primary p-0.5"><Star className="h-2.5 w-2.5 text-primary-foreground fill-primary-foreground" /></div>
+                            : <button type="button" onClick={e => { e.stopPropagation(); setCoverIndex(idx); }} className="absolute top-1 left-1 rounded-full bg-black/50 p-0.5 opacity-0 group-hover/img:opacity-100 transition-opacity"><StarBorder className="h-2.5 w-2.5 text-white" /></button>
+                          }
+                          <button type="button" onClick={e => { e.stopPropagation(); setExistingImages(p => p.filter((_, i) => i !== idx)); if (coverIndex >= existingImages.length - 1) setCoverIndex(0); }} className="absolute top-1 right-1 rounded-full bg-black/50 p-0.5 opacity-0 group-hover/img:opacity-100 transition-opacity hover:bg-destructive/80"><X className="h-2.5 w-2.5 text-white" /></button>
+                        </div>
+                      );
+                    })}
+                    {pendingImages.map((img, idx) => {
+                      const cIdx = existingImages.length + idx;
+                      const isCover = cIdx === coverIndex;
+                      return (
+                        <div key={`pend-${idx}`} className={cn("relative group/img aspect-square rounded-xl overflow-hidden border-2 cursor-pointer transition-all", isCover ? "border-primary ring-2 ring-primary/20" : "border-primary/30 hover:border-primary/50")} onClick={() => setCoverIndex(cIdx)}>
+                          <img src={img.preview} className="w-full h-full object-cover transition-transform duration-300 group-hover/img:scale-105" />
+                          <div className="absolute bottom-0 left-0 right-0 bg-primary/80 text-primary-foreground text-[9px] text-center py-0.5 font-medium">Pending</div>
+                          {isCover
+                            ? <div className="absolute top-1 left-1 rounded-full bg-primary p-0.5"><Star className="h-2.5 w-2.5 text-primary-foreground fill-primary-foreground" /></div>
+                            : <button type="button" onClick={e => { e.stopPropagation(); setCoverIndex(cIdx); }} className="absolute top-1 left-1 rounded-full bg-black/50 p-0.5 opacity-0 group-hover/img:opacity-100 transition-opacity"><StarBorder className="h-2.5 w-2.5 text-white" /></button>
+                          }
+                          <button type="button" onClick={e => { e.stopPropagation(); removePendingImage(idx); if (coverIndex >= existingImages.length + pendingImages.length - 1) setCoverIndex(0); }} className="absolute top-1 right-1 rounded-full bg-black/50 p-0.5 opacity-0 group-hover/img:opacity-100 transition-opacity hover:bg-destructive/80"><X className="h-2.5 w-2.5 text-white" /></button>
+                        </div>
+                      );
+                    })}
+                    {totalImages < 5 && (
+                      <button type="button" onClick={() => fileInputRef.current?.click()} className="aspect-square rounded-xl border-2 border-dashed border-border hover:border-primary/50 hover:bg-primary/5 flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-primary transition-all group/add">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted/80 group-hover/add:bg-primary/10 transition-colors">
+                          <ImagePlus className="h-4 w-4" />
+                        </div>
+                        <span className="text-[10px] font-medium">Add</span>
+                      </button>
+                    )}
                   </div>
-
-                  {durationMode === 'preset' ? (
-                    <div className="flex flex-wrap gap-2">
-                      {presetDurations.map(d => (
-                        <button
-                          key={d.hours}
-                          type="button"
-                          onClick={() => setPresetDuration(d.hours.toString())}
-                          className={cn(
-                            "rounded-xl px-3 py-2 text-sm font-medium transition-all border",
-                            presetDuration === d.hours.toString()
-                              ? "border-primary bg-primary/10 text-primary shadow-sm"
-                              : "border-border text-muted-foreground hover:text-foreground hover:border-primary/30"
-                          )}
-                        >
-                          {d.label}
-                        </button>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="flex items-end gap-3 animate-fade-in">
-                      <div className="space-y-2 flex-1">
-                        <Label htmlFor="custom-days" className="text-sm">Days</Label>
-                        <Input
-                          id="custom-days"
-                          type="number"
-                          min="0"
-                          max="30"
-                          value={customDurationDays}
-                          onChange={e => setCustomDurationDays(e.target.value)}
-                          placeholder="0"
-                          className="h-11 font-mono"
-                        />
+                  {totalImages > 0 && (
+                    <div className="flex items-center gap-2 mt-3">
+                      <div className="flex-1 h-1 rounded-full bg-muted overflow-hidden">
+                        <div className="h-full rounded-full bg-gradient-to-r from-primary to-primary/70 transition-all duration-500" style={{ width: `${(totalImages / 5) * 100}%` }} />
                       </div>
-                      <div className="space-y-2 flex-1">
-                        <Label htmlFor="custom-hours" className="text-sm">Hours</Label>
-                        <Input
-                          id="custom-hours"
-                          type="number"
-                          min="0"
-                          max="23"
-                          value={customDurationHours}
-                          onChange={e => setCustomDurationHours(e.target.value)}
-                          placeholder="0"
-                          className="h-11 font-mono"
-                        />
-                      </div>
+                      <span className="text-[10px] font-mono text-muted-foreground">{totalImages}/5</span>
                     </div>
                   )}
                 </div>
+              </div>
 
-                {/* Summary */}
-                <div className={cn(
-                  "rounded-xl border p-3 flex items-start gap-2",
-                  durationHoursSummary <= 0 ? "bg-destructive/5 border-destructive/20" : "bg-muted/50 border-border"
-                )}>
-                  <Schedule className={cn("h-4 w-4 mt-0.5 shrink-0", durationHoursSummary <= 0 ? "text-destructive" : "text-muted-foreground")} />
-                  <p className={cn("text-sm", durationHoursSummary <= 0 ? "text-destructive" : "text-muted-foreground")}>
-                    {scheduleSummary}
-                  </p>
+              {/* ── Pricing ── */}
+              <div className="relative overflow-hidden rounded-2xl p-[1px] bg-gradient-to-br from-primary/25 via-border to-border shadow-sm animate-float-up delay-300">
+                <div className="rounded-2xl bg-card/95 backdrop-blur-sm p-5 sm:p-6">
+                  <div className="flex items-center gap-3 mb-5">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20">
+                      <RupeeSign className="h-4.5 w-4.5 text-primary" />
+                    </div>
+                    <div>
+                      <h2 className="font-semibold text-base">Pricing</h2>
+                      <p className="text-xs text-muted-foreground">Starting price and bid increment</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="base-price" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Starting Price *</Label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">₹</span>
+                        <Input id="base-price" type="number" min="1" value={basePrice} onChange={e => setBasePrice(e.target.value)} placeholder="0" className="h-10 pl-7 font-mono" />
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="bid-increment" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Bid Increment *</Label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">₹</span>
+                        <Input id="bid-increment" type="number" min="1" value={bidIncrement} onChange={e => setBidIncrement(e.target.value)} placeholder="100" className="h-10 pl-7 font-mono" />
+                      </div>
+                    </div>
+                  </div>
+                  {basePrice && bidIncrement && (
+                    <div className="mt-4 rounded-xl bg-primary/5 border border-primary/15 p-3 flex items-center gap-2 animate-fade-in">
+                      <Info className="h-3.5 w-3.5 text-primary shrink-0" />
+                      <p className="text-xs text-muted-foreground">
+                        Starts at <span className="font-mono font-semibold text-foreground">₹{parseFloat(basePrice).toLocaleString()}</span>, increments of <span className="font-mono font-semibold text-foreground">₹{parseFloat(bidIncrement).toLocaleString()}</span>
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
-            </div>
-          </div>
-          )}
 
-          {/* Duration for edit mode (simplified, no schedule change) */}
-          {isEdit && (
-            <div className="group relative overflow-hidden rounded-2xl p-[1px] bg-gradient-to-br from-primary/30 via-border to-border shadow-card animate-float-up delay-400">
-              <div className="rounded-2xl bg-card/90 backdrop-blur-sm p-6">
-                <div className="flex items-center gap-3 mb-1">
-                  <SectionIcon icon={Schedule} />
-                  <div>
-                    <h2 className="font-display text-lg font-semibold">Duration</h2>
-                    <p className="text-sm text-muted-foreground">Auction timing cannot be changed after creation.</p>
+              {/* ── Schedule & Duration ── */}
+              {!isEdit && (
+                <div className="relative overflow-hidden rounded-2xl p-[1px] bg-gradient-to-br from-primary/25 via-border to-border shadow-sm animate-float-up delay-400">
+                  <div className="rounded-2xl bg-card/95 backdrop-blur-sm p-5 sm:p-6">
+                    <div className="flex items-center gap-3 mb-5">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20">
+                        <Schedule className="h-4.5 w-4.5 text-primary" />
+                      </div>
+                      <div>
+                        <h2 className="font-semibold text-base">Schedule & Duration</h2>
+                        <p className="text-xs text-muted-foreground">When it starts and how long it runs</p>
+                      </div>
+                    </div>
+
+                    {/* Start mode */}
+                    <div className="grid grid-cols-2 gap-3 mb-5">
+                      {[
+                        { mode: 'now' as const, icon: PlayArrow, title: 'Start Now', sub: 'Goes live immediately' },
+                        { mode: 'scheduled' as const, icon: Schedule, title: 'Schedule', sub: 'Pick a future time' },
+                      ].map(({ mode, icon: Icon, title, sub }) => (
+                        <button key={mode} type="button" onClick={() => setStartMode(mode)}
+                          className={cn("flex items-center gap-3 rounded-xl border-2 p-3.5 transition-all text-left", startMode === mode ? "border-primary bg-primary/5" : "border-border hover:border-primary/30")}>
+                          <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-lg", startMode === mode ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground")}>
+                            <Icon className="h-4 w-4" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold">{title}</p>
+                            <p className="text-xs text-muted-foreground">{sub}</p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Date/time picker */}
+                    {startMode === 'scheduled' && (
+                      <div className="space-y-3 mb-5 animate-fade-in">
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1.5">
+                            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1"><CalendarIcon className="h-3 w-3" /> Date *</Label>
+                            <Input type="date" value={scheduledDateStr} onChange={e => setScheduledDateStr(e.target.value)} min={getMinDate()} max={getMaxDate()} className="font-mono h-10" />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1"><ClockIcon className="h-3 w-3" /> Time *</Label>
+                            <Select value={scheduledTimeStr} onValueChange={setScheduledTimeStr}>
+                              <SelectTrigger className="font-mono h-10"><SelectValue /></SelectTrigger>
+                              <SelectContent className="max-h-52">
+                                {timeSlots.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        {scheduledDateStr && (
+                          <div className="rounded-xl bg-primary/5 border border-primary/15 p-3 flex items-start gap-2 text-xs animate-fade-in">
+                            <Schedule className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" />
+                            <span className="text-muted-foreground">Goes live <span className="font-semibold text-foreground">{new Date(`${scheduledDateStr}T${scheduledTimeStr}`).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span></span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="h-px bg-border mb-5" />
+
+                    {/* Duration */}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Duration</Label>
+                        <div className="flex gap-1.5">
+                          {(['preset', 'custom'] as const).map(m => (
+                            <button key={m} type="button" onClick={() => setDurationMode(m)}
+                              className={cn("rounded-lg px-2.5 py-1 text-xs font-medium transition-all", durationMode === m ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground")}>
+                              {m.charAt(0).toUpperCase() + m.slice(1)}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      {durationMode === 'preset' ? (
+                        <div className="flex flex-wrap gap-2">
+                          {presetDurations.map(d => (
+                            <button key={d.hours} type="button" onClick={() => setPresetDuration(d.hours.toString())}
+                              className={cn("rounded-xl px-3 py-1.5 text-xs font-medium transition-all border", presetDuration === d.hours.toString() ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:border-primary/30 hover:text-foreground")}>
+                              {d.label}
+                            </button>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="flex gap-3 animate-fade-in">
+                          <div className="flex-1 space-y-1.5">
+                            <Label className="text-xs text-muted-foreground">Days</Label>
+                            <Input type="number" min="0" max="30" value={customDurationDays} onChange={e => setCustomDurationDays(e.target.value)} placeholder="0" className="h-10 font-mono" />
+                          </div>
+                          <div className="flex-1 space-y-1.5">
+                            <Label className="text-xs text-muted-foreground">Hours</Label>
+                            <Input type="number" min="0" max="23" value={customDurationHours} onChange={e => setCustomDurationHours(e.target.value)} placeholder="0" className="h-10 font-mono" />
+                          </div>
+                        </div>
+                      )}
+                      {durationHoursSummary > 0 && (
+                        <div className="rounded-xl bg-muted/60 border border-border p-3 flex items-center gap-2 text-xs animate-fade-in">
+                          <TimerIcon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                          <span className="text-muted-foreground">
+                            {startMode === 'now' ? 'Starts immediately' : scheduledDateStr ? 'Starts at scheduled time' : 'Starts at scheduled time'}, runs for <span className="font-semibold text-foreground">{durationLabel}</span>
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-                <div className="mt-4 rounded-xl bg-muted/50 border border-border p-3 flex items-start gap-2">
-                  <Info className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
-                  <p className="text-sm text-muted-foreground">
-                    This auction was created with a fixed schedule. Start time and duration cannot be modified.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
+              )}
 
-          {/* Actions */}
-          <div className="flex flex-col sm:flex-row gap-3 justify-end animate-float-up delay-500">
-            <button
-              type="button"
-              onClick={() => navigate('/seller/products')}
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-border px-6 py-3 text-base font-medium text-foreground transition-all hover:bg-muted hover:border-primary/20"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={submitting}
-              className="inline-flex items-center justify-center gap-2 rounded-xl gradient-gold px-8 py-3 text-base font-bold text-primary-foreground shadow-elegant transition-all hover:scale-[1.02] hover:shadow-lg disabled:opacity-70 disabled:hover:scale-100"
-            >
-              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-              {submitting
-                ? 'Saving...'
-                : isEdit
-                  ? 'Save Changes'
-                  : startMode === 'scheduled'
-                    ? 'Schedule Auction'
-                    : 'List for Auction'}
-            </button>
+              {/* ── Actions ── */}
+              <div className="flex gap-3 justify-end pt-2 animate-float-up delay-500">
+                <button type="button" onClick={() => navigate('/seller/products')}
+                  className="rounded-xl border border-border px-5 py-2.5 text-sm font-medium text-foreground transition-all hover:bg-muted hover:border-primary/20">
+                  Cancel
+                </button>
+                <button type="submit" disabled={submitting}
+                  className="inline-flex items-center gap-2 rounded-xl gradient-gold px-7 py-2.5 text-sm font-bold text-primary-foreground shadow-elegant transition-all hover:scale-[1.02] hover:shadow-lg disabled:opacity-70 disabled:hover:scale-100">
+                  {submitting ? <><span className="h-3.5 w-3.5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />Saving...</> : <><Save className="h-3.5 w-3.5" />{isEdit ? 'Save Changes' : startMode === 'scheduled' ? 'Schedule Auction' : 'List for Auction'}</>}
+                </button>
+              </div>
+            </form>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );
