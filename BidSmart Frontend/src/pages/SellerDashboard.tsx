@@ -61,11 +61,17 @@ const SellerDashboard = () => {
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
     .slice(0, 5);
 
+  const goldAccent = {
+    accent: 'from-primary/20 to-primary/5',
+    iconBg: 'from-primary/25 to-primary/5',
+    borderAccent: 'border-primary/20',
+    textAccent: 'from-primary to-amber-400',
+  };
   const statCards = [
-    { icon: Package, label: 'Active Listings', value: String(activeCount), accent: 'from-amber-500/20 to-orange-500/10', iconBg: 'from-amber-500/25 to-orange-500/10', borderAccent: 'border-amber-500/20', textAccent: 'from-amber-400 to-orange-500' },
-    { icon: RupeeSign, label: 'Total Revenue', value: `₹${totalRevenue.toLocaleString()}`, accent: 'from-emerald-500/20 to-green-500/10', iconBg: 'from-emerald-500/25 to-green-500/10', borderAccent: 'border-emerald-500/20', textAccent: 'from-emerald-400 to-green-500' },
-    { icon: TrendingUp, label: 'Bids Received', value: String(totalBidsReceived), accent: 'from-blue-500/20 to-cyan-500/10', iconBg: 'from-blue-500/25 to-cyan-500/10', borderAccent: 'border-blue-500/20', textAccent: 'from-blue-400 to-cyan-500' },
-    { icon: Eye, label: 'Total Views', value: String(totalViews), accent: 'from-violet-500/20 to-purple-500/10', iconBg: 'from-violet-500/25 to-purple-500/10', borderAccent: 'border-violet-500/20', textAccent: 'from-violet-400 to-purple-500' },
+    { icon: Package, label: 'Active Listings', value: String(activeCount), ...goldAccent },
+    { icon: RupeeSign, label: 'Total Revenue', value: `₹${totalRevenue.toLocaleString()}`, ...goldAccent },
+    { icon: TrendingUp, label: 'Bids Received', value: String(totalBidsReceived), ...goldAccent },
+    { icon: Eye, label: 'Total Views', value: String(totalViews), ...goldAccent },
   ];
 
   return (

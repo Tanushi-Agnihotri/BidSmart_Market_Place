@@ -184,8 +184,8 @@
   }
   .glass-dark {
     @apply backdrop-blur-2xl;
-    background: hsl(var(--background) / 0.95);
-    border-bottom: 1px solid hsl(var(--border));
+    background: hsl(var(--background) / 0.6);
+    border-bottom: 1px solid hsl(var(--border) / 0.5);
     box-shadow: 0 1px 3px 0 hsl(var(--foreground) / 0.04);
   }
   .gradient-gold {

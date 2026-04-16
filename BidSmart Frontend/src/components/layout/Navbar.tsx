@@ -113,7 +113,7 @@ const Navbar = () => {
 
   if (isAuthRoute) {
     return (
-      <nav className="fixed top-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-md border-b border-border/50 py-1">
+      <nav className="fixed top-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-md border-b border-border/50 py-2.5">
         <div className="flex items-center justify-between px-6 sm:px-10">
           <Link to="/" className="flex items-center gap-2 group shrink-0">
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-primary/90 to-primary/70 shadow-sm transition-all group-hover:shadow-md">
@@ -138,7 +138,7 @@ const Navbar = () => {
   return (
     <nav className={cn(
       "fixed top-0 left-0 right-0 z-40 transition-all duration-300",
-      isScrolled ? "glass-dark py-1" : "bg-gradient-to-b from-black/50 to-transparent py-1.5"
+      isScrolled ? "glass-dark py-2.5" : "bg-gradient-to-b from-black/50 to-transparent py-3"
     )}>
       <div className="flex items-center justify-between px-4 sm:px-8 lg:px-12">
         {/* Logo */}
