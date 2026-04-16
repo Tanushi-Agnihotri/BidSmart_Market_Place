@@ -5,15 +5,13 @@ import {
   MdOutlineAnalytics as Analytics,
   MdOutlineStorefront as Storefront,
   MdOutlineSwapHoriz as SwapHoriz,
-  MdOutlineArrowBack as ArrowLeft,
+  MdOutlineArrowForward as ArrowRight,
 } from 'react-icons/md';
 import { useApp } from '@/context/AppContext';
-import { Button } from '@/components/ui/button';
+import heroImg from '@/assets/hero-auction.jpg';
 
 interface SellerAccessGateProps {
-  /** Short name of the gated feature, e.g. "Seller Dashboard" */
   feature: string;
-  /** One-line explanation of what this feature gives a seller */
   description: string;
 }
 
@@ -25,80 +23,101 @@ const defaultPerks = [
 
 const SellerAccessGate = ({ feature, description }: SellerAccessGateProps) => {
   const { currentUser, switchMode } = useApp();
-
-  // Only a user whose registered profile role is 'seller' can toggle modes.
-  // Buyers (and guests) must complete seller registration first.
   const isRegisteredSeller = currentUser?.role === 'seller';
 
   return (
-    <div className="relative min-h-screen overflow-hidden pt-24 pb-16 flex items-center justify-center animate-fade-in">
-      {/* Decorative background */}
-      <div className="pointer-events-none absolute inset-0 bg-floating-orbs opacity-60" />
-      <div className="pointer-events-none absolute inset-0 bg-lines-pattern opacity-30" />
+    <div className="min-h-screen animate-fade-in">
+      {/* ═══════════ HERO ═══════════ */}
+      <section className="relative flex items-center overflow-hidden">
+        <div className="absolute inset-0">
+          <img src={heroImg} alt="" className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/75 to-black/40" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-black/40 to-black/20" />
+        </div>
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {Array.from({ length: 12 }).map((_, i) => (
+            <div
+              key={i}
+              className="absolute rounded-full"
+              style={{
+                width: `${Math.random() * 4 + 2}px`,
+                height: `${Math.random() * 4 + 2}px`,
+                left: `${Math.random() * 100}%`,
+                bottom: '-10px',
+                background: `radial-gradient(circle, hsl(36 60% 52% / ${0.25 + Math.random() * 0.35}), transparent)`,
+                animation: `particle-rise ${Math.random() * 10 + 7}s linear ${Math.random() * 5}s infinite`,
+              }}
+            />
+          ))}
+        </div>
+        <div className="container relative mx-auto px-4 pt-32 pb-20 text-center">
+          <div className="inline-flex items-center gap-2.5 rounded-full border border-primary/30 bg-primary/10 backdrop-blur-md px-5 py-2 mb-6 animate-float-up animate-border-glow">
+            <Storefront className="h-4 w-4 text-primary" />
+            <span className="text-xs font-bold uppercase tracking-[0.2em] text-primary">Seller Zone · {feature}</span>
+          </div>
+          <h1 className="font-display text-4xl sm:text-5xl md:text-6xl font-bold leading-[1.1] text-white mb-4 tracking-tight animate-float-up delay-100" style={{ animationFillMode: 'both' }}>
+            {isRegisteredSeller ? 'Switch to ' : 'Become a '}
+            <span className="gradient-text-animated">{isRegisteredSeller ? 'Seller Mode' : 'Seller'}</span>
+          </h1>
+          <p className="text-lg text-white/65 max-w-lg mx-auto leading-relaxed mb-8 animate-float-up delay-200" style={{ animationFillMode: 'both' }}>
+            {isRegisteredSeller
+              ? `${description} Switch to your seller mode to continue.`
+              : `${description} Register as a seller to get started.`}
+          </p>
+        </div>
+        <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background to-transparent" />
+      </section>
 
-      <div className="relative container mx-auto px-4 max-w-2xl">
-        <div className="relative overflow-hidden rounded-3xl p-[1px] bg-gradient-to-br from-primary/50 via-primary/20 to-border shadow-card">
-          <div className="relative rounded-3xl bg-card/90 backdrop-blur-sm p-8 md:p-10 text-center">
-            {/* Glowing icon */}
-            <div className="relative inline-flex items-center justify-center mb-5">
-              <div className="relative flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/25 to-primary/5 border border-primary/30 shadow-lg">
-                <Storefront className="h-10 w-10 text-primary" />
-              </div>
-            </div>
-
-            <span className="inline-block text-xs font-semibold uppercase tracking-[0.2em] text-primary mb-2">
-              Seller Zone · {feature}
-            </span>
-            <h2 className="font-display text-3xl md:text-4xl font-bold tracking-tight mb-3 bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">
-              {isRegisteredSeller ? 'Seller Access Required' : 'Become a Seller First'}
-            </h2>
-            <p className="text-base md:text-lg text-muted-foreground leading-relaxed max-w-md mx-auto mb-8">
-              {isRegisteredSeller
-                ? `${description} Switch to your seller mode to continue.`
-                : `${description} Register as a seller — add your store details, verify your identity, and set up payouts — to get started.`}
-            </p>
-
-            {/* Perk grid */}
-            <div className="grid gap-3 sm:grid-cols-3 mb-8 text-left">
-              {defaultPerks.map(p => {
-                const Icon = p.icon;
-                return (
-                  <div
-                    key={p.label}
-                    className="rounded-xl border border-border bg-background/40 p-4 hover:border-primary/30 transition-colors"
-                  >
-                    <div className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary mb-2">
-                      <Icon className="h-5 w-5" />
-                    </div>
-                    <p className="font-semibold text-sm text-foreground">{p.label}</p>
-                    <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{p.desc}</p>
+      {/* ═══════════ PERKS ═══════════ */}
+      <section className="relative overflow-hidden section-bg-art">
+        <div className="container mx-auto px-4 py-16 relative z-10">
+          <div className="grid gap-5 sm:grid-cols-3 max-w-3xl mx-auto mb-12">
+            {defaultPerks.map((p, i) => {
+              const Icon = p.icon;
+              return (
+                <div
+                  key={p.label}
+                  className="group rounded-2xl glass-card p-6 text-center hover-lift sparkle-hover animate-float-up"
+                  style={{ animationDelay: `${i * 100}ms`, animationFillMode: 'both' }}
+                >
+                  <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-primary/8 transition-all duration-300 group-hover:bg-primary group-hover:scale-105 group-hover:shadow-elegant icon-ring">
+                    <Icon className="h-6 w-6 text-primary group-hover:text-primary-foreground transition-colors" />
                   </div>
-                );
-              })}
-            </div>
+                  <p className="font-display font-bold text-foreground mb-1">{p.label}</p>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{p.desc}</p>
+                </div>
+              );
+            })}
+          </div>
 
-            {/* Actions */}
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              {isRegisteredSeller ? (
-                <Button onClick={switchMode} size="lg" className="gap-2">
-                  <SwapHoriz className="h-4 w-4" /> Switch to Seller Mode
-                </Button>
-              ) : (
-                <Button asChild size="lg" className="gap-2">
-                  <Link to="/become-seller">
-                    <Storefront className="h-4 w-4" /> Register as Seller
-                  </Link>
-                </Button>
-              )}
-              <Button asChild variant="outline" size="lg" className="gap-2">
-                <Link to="/">
-                  <ArrowLeft className="h-4 w-4" /> Back to Home
-                </Link>
-              </Button>
-            </div>
+          {/* CTA */}
+          <div className="flex flex-wrap gap-3 justify-center animate-float-up delay-500" style={{ animationFillMode: 'both' }}>
+            {isRegisteredSeller ? (
+              <button
+                onClick={switchMode}
+                className="group inline-flex items-center gap-2 rounded-xl gradient-gold px-8 py-4 text-lg font-bold text-primary-foreground shadow-elegant transition-all hover:scale-[1.02] hover:shadow-lg"
+              >
+                <SwapHoriz className="h-5 w-5" /> Switch to Seller Mode
+                <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+              </button>
+            ) : (
+              <Link
+                to="/become-seller"
+                className="group inline-flex items-center gap-2 rounded-xl gradient-gold px-8 py-4 text-lg font-bold text-primary-foreground shadow-elegant transition-all hover:scale-[1.02] hover:shadow-lg"
+              >
+                <Storefront className="h-5 w-5" /> Register as Seller
+                <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+              </Link>
+            )}
+            <Link
+              to="/auctions"
+              className="inline-flex items-center gap-2 rounded-xl border border-border px-8 py-4 text-lg font-medium text-foreground transition-all hover:bg-primary hover:text-primary-foreground hover:border-primary"
+            >
+              Browse Auctions
+            </Link>
           </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 };

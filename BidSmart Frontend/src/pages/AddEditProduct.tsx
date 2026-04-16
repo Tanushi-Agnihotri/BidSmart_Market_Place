@@ -2,13 +2,12 @@ import { useState, useRef, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { MdOutlineArrowBack as ArrowLeft, MdOutlineCloudUpload as Upload, MdOutlineAddPhotoAlternate as ImagePlus, MdOutlineClose as X, MdOutlineSave as Save, MdOutlineVisibility as Eye, MdOutlineSync as Loader2, MdOutlineSchedule as Schedule, MdOutlinePlayArrow as PlayArrow, MdOutlineCalendarToday as CalendarIcon, MdOutlineAccessTime as ClockIcon, MdOutlineStar as Star, MdOutlineStarBorder as StarBorder } from 'react-icons/md';
 import { useApp } from '@/context/AppContext';
-import { Button } from '@/components/ui/button';
+
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
 import { categories } from '@/data/mockData';
 import { toast } from 'sonner';
 import { auctionApi, imageApi, ApiError } from '@/lib/apiService';
@@ -263,82 +262,101 @@ const AddEditProduct = () => {
   })();
 
   return (
-    <div className="min-h-screen bg-background pt-24 pb-16">
-      <div className="container mx-auto px-4 max-w-3xl">
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-8">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/seller/products')}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div>
-            <h1 className="font-display text-3xl font-bold">{isEdit ? 'Edit Product' : 'Add New Product'}</h1>
-            <p className="text-muted-foreground text-base mt-1">
-              {isEdit ? 'Update your listing details below.' : 'Fill in the details to list your item for auction.'}
-            </p>
+    <div className="relative min-h-screen overflow-hidden pt-24 pb-20 animate-fade-in">
+      {/* Decorative background */}
+      <div className="pointer-events-none absolute inset-0 bg-floating-orbs opacity-60" />
+      <div className="pointer-events-none absolute inset-0 bg-lines-pattern opacity-30" />
+
+      <div className="relative container mx-auto px-4 max-w-3xl">
+        {/* Hero header */}
+        <div className="relative overflow-hidden rounded-3xl p-[1px] bg-gradient-to-br from-primary/50 via-primary/20 to-border shadow-card mb-8">
+          <div className="relative rounded-3xl bg-card/90 backdrop-blur-sm p-6 md:p-8">
+            <div className="flex items-start gap-4">
+              <button
+                type="button"
+                onClick={() => navigate('/seller/products')}
+                className="shrink-0 flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-muted/50 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors mt-1"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </button>
+              <div>
+                <span className="inline-block text-xs font-semibold uppercase tracking-[0.2em] text-primary mb-1">
+                  Seller Zone
+                </span>
+                <h1 className="font-display text-3xl md:text-4xl font-bold tracking-tight bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">
+                  {isEdit ? 'Edit Product' : 'Add New Product'}
+                </h1>
+                <p className="text-sm md:text-base text-muted-foreground mt-1">
+                  {isEdit ? 'Update your listing details below.' : 'Fill in the details to list your item for auction.'}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Basic Info */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Basic Information</CardTitle>
-              <CardDescription>Title, category, and condition of your item.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="title">Title *</Label>
-                <Input id="title" value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Vintage Rolex Submariner 1968" />
+          <div className="relative overflow-hidden rounded-2xl p-[1px] bg-gradient-to-br from-primary/30 via-border to-border shadow-card">
+            <div className="rounded-2xl bg-card/90 backdrop-blur-sm p-6">
+              <div className="flex items-center gap-2 mb-1">
+                <h2 className="font-display text-lg font-semibold">Basic Information</h2>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <p className="text-sm text-muted-foreground mb-5">Title, category, and condition of your item.</p>
+              <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Category *</Label>
-                  <Select value={category} onValueChange={setCategory}>
-                    <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
-                    <SelectContent>
-                      {categories.map(c => (
-                        <SelectItem key={c.name} value={c.name}>
-                          <div className="flex items-center gap-2">
-                            {c.icon}
-                            <span>{c.name}</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="title">Title *</Label>
+                  <Input id="title" value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Vintage Rolex Submariner 1968" />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Category *</Label>
+                    <Select value={category} onValueChange={setCategory}>
+                      <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
+                      <SelectContent>
+                        {categories.map(c => (
+                          <SelectItem key={c.name} value={c.name}>
+                            <div className="flex items-center gap-2">
+                              {c.icon}
+                              <span>{c.name}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Condition *</Label>
+                    <Select value={condition} onValueChange={setCondition}>
+                      <SelectTrigger><SelectValue placeholder="Select condition" /></SelectTrigger>
+                      <SelectContent>
+                        {conditions.map(c => (
+                          <SelectItem key={c} value={c}>{c}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
                 <div className="space-y-2">
-                  <Label>Condition *</Label>
-                  <Select value={condition} onValueChange={setCondition}>
-                    <SelectTrigger><SelectValue placeholder="Select condition" /></SelectTrigger>
-                    <SelectContent>
-                      {conditions.map(c => (
-                        <SelectItem key={c} value={c}>{c}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    value={description}
+                    onChange={e => setDescription(e.target.value)}
+                    placeholder="Describe your item in detail — condition, history, provenance..."
+                    rows={4}
+                  />
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={description}
-                  onChange={e => setDescription(e.target.value)}
-                  placeholder="Describe your item in detail — condition, history, provenance..."
-                  rows={4}
-                />
-              </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {/* Images */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Images</CardTitle>
-              <CardDescription>Upload up to 5 high-quality photos. Click the star to set the cover photo.</CardDescription>
-            </CardHeader>
-            <CardContent>
+          <div className="relative overflow-hidden rounded-2xl p-[1px] bg-gradient-to-br from-primary/30 via-border to-border shadow-card">
+            <div className="rounded-2xl bg-card/90 backdrop-blur-sm p-6">
+              <div className="flex items-center gap-2 mb-1">
+                <h2 className="font-display text-lg font-semibold">Images</h2>
+              </div>
+              <p className="text-sm text-muted-foreground mb-5">Upload up to 5 high-quality photos. Click the star to set the cover photo.</p>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -456,19 +474,19 @@ const AddEditProduct = () => {
               {totalImages > 0 && (
                 <p className="text-sm text-muted-foreground mt-2">{totalImages}/5 images</p>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {/* Pricing */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Pricing</CardTitle>
-              <CardDescription>Set your starting price and bid increment.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+          <div className="relative overflow-hidden rounded-2xl p-[1px] bg-gradient-to-br from-primary/30 via-border to-border shadow-card">
+            <div className="rounded-2xl bg-card/90 backdrop-blur-sm p-6">
+              <div className="flex items-center gap-2 mb-1">
+                <h2 className="font-display text-lg font-semibold">Pricing</h2>
+              </div>
+              <p className="text-sm text-muted-foreground mb-5">Set your starting price and bid increment.</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="base-price">Starting Price ($) *</Label>
+                  <Label htmlFor="base-price">Starting Price (₹) *</Label>
                   <Input
                     id="base-price"
                     type="number"
@@ -479,7 +497,7 @@ const AddEditProduct = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="bid-increment">Bid Increment ($) *</Label>
+                  <Label htmlFor="bid-increment">Bid Increment (₹) *</Label>
                   <Input
                     id="bid-increment"
                     type="number"
@@ -490,17 +508,18 @@ const AddEditProduct = () => {
                   />
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {/* Scheduling & Duration */}
           {!isEdit && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Schedule & Duration</CardTitle>
-                <CardDescription>Choose when your auction starts and how long it runs.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
+            <div className="relative overflow-hidden rounded-2xl p-[1px] bg-gradient-to-br from-primary/30 via-border to-border shadow-card">
+              <div className="rounded-2xl bg-card/90 backdrop-blur-sm p-6">
+                <div className="flex items-center gap-2 mb-1">
+                  <h2 className="font-display text-lg font-semibold">Schedule & Duration</h2>
+                </div>
+                <p className="text-sm text-muted-foreground mb-5">Choose when your auction starts and how long it runs.</p>
+                <div className="space-y-6">
                 {/* Start Time Toggle */}
                 <div className="space-y-3">
                   <Label>When should the auction start?</Label>
@@ -616,7 +635,7 @@ const AddEditProduct = () => {
                   </div>
                 )}
 
-                <Separator />
+                <div className="h-px bg-border" />
 
                 {/* Duration */}
                 <div className="space-y-3">
@@ -702,31 +721,39 @@ const AddEditProduct = () => {
                     {scheduleSummary}
                   </p>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           )}
 
           {/* Duration for edit mode (simplified, no schedule change) */}
           {isEdit && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Duration</CardTitle>
-                <CardDescription>Auction timing cannot be changed after creation.</CardDescription>
-              </CardHeader>
-              <CardContent>
+            <div className="relative overflow-hidden rounded-2xl p-[1px] bg-gradient-to-br from-primary/30 via-border to-border shadow-card">
+              <div className="rounded-2xl bg-card/90 backdrop-blur-sm p-6">
+                <div className="flex items-center gap-2 mb-1">
+                  <h2 className="font-display text-lg font-semibold">Duration</h2>
+                </div>
+                <p className="text-sm text-muted-foreground mb-3">Auction timing cannot be changed after creation.</p>
                 <p className="text-base text-muted-foreground">
                   This auction was created with a fixed schedule. Start time and duration cannot be modified.
                 </p>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           )}
 
           {/* Actions */}
           <div className="flex flex-col sm:flex-row gap-3 justify-end">
-            <Button type="button" variant="outline" onClick={() => navigate('/seller/products')}>
+            <button
+              type="button"
+              onClick={() => navigate('/seller/products')}
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-border px-6 py-3 text-base font-medium text-foreground transition-all hover:bg-muted"
+            >
               Cancel
-            </Button>
-            <Button type="submit" disabled={submitting} className="gradient-gold text-primary-foreground font-bold gap-1.5">
+            </button>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="inline-flex items-center justify-center gap-2 rounded-xl gradient-gold px-8 py-3 text-base font-bold text-primary-foreground shadow-elegant transition-all hover:scale-[1.02] hover:shadow-lg disabled:opacity-70 disabled:hover:scale-100"
+            >
               {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
               {submitting
                 ? 'Saving...'
@@ -735,7 +762,7 @@ const AddEditProduct = () => {
                   : startMode === 'scheduled'
                     ? 'Schedule Auction'
                     : 'List for Auction'}
-            </Button>
+            </button>
           </div>
         </form>
       </div>

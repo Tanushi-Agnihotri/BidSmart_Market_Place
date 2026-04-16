@@ -5,7 +5,6 @@ import { useApp } from '@/context/AppContext';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -74,34 +73,63 @@ const SellerProducts = () => {
 
 
   return (
-    <div className="min-h-screen bg-background pt-24 pb-16">
-      <div className="container mx-auto px-4">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-          <div>
-            <h1 className="font-display text-2xl font-bold">My Products</h1>
-            <p className="text-sm text-muted-foreground mt-1">{myProducts.length} listings total</p>
+    <div className="relative min-h-screen overflow-hidden pt-24 pb-20 animate-fade-in">
+      {/* Decorative background */}
+      <div className="pointer-events-none absolute inset-0 bg-floating-orbs opacity-60" />
+      <div className="pointer-events-none absolute inset-0 bg-lines-pattern opacity-30" />
+
+      <div className="relative container mx-auto px-4">
+        {/* Hero header */}
+        <div className="relative overflow-hidden rounded-3xl p-[1px] bg-gradient-to-br from-primary/50 via-primary/20 to-border shadow-card mb-8">
+          <div className="relative rounded-3xl bg-card/90 backdrop-blur-sm p-6 md:p-8">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-start gap-4">
+                <div className="relative shrink-0">
+                  <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/25 to-primary/5 border border-primary/30 shadow-lg">
+                    <Package className="h-7 w-7 text-primary" />
+                  </div>
+                </div>
+                <div>
+                  <span className="inline-block text-xs font-semibold uppercase tracking-[0.2em] text-primary mb-1">
+                    Seller Zone
+                  </span>
+                  <h1 className="font-display text-3xl md:text-4xl font-bold tracking-tight bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">
+                    My Products
+                  </h1>
+                  <p className="text-sm md:text-base text-muted-foreground mt-1">
+                    {myProducts.length} listing{myProducts.length !== 1 ? 's' : ''} total — manage, edit, and track all your auctions.
+                  </p>
+                </div>
+              </div>
+              <Link
+                to="/seller/products/new"
+                className="inline-flex items-center gap-2 rounded-xl gradient-gold px-6 py-3 text-base font-bold text-primary-foreground shadow-elegant transition-all hover:scale-[1.02] hover:shadow-lg shrink-0"
+              >
+                <Plus className="h-5 w-5" /> Add Product
+              </Link>
+            </div>
           </div>
         </div>
 
         {/* Quick stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {[
-            { label: 'Total', value: stats.total, color: 'text-foreground' },
-            { label: 'Active', value: stats.active, color: 'text-success' },
-            { label: 'Ending Soon', value: stats.ending, color: 'text-warning' },
-            { label: 'Closed', value: stats.closed, color: 'text-muted-foreground' },
+            { label: 'Total', value: stats.total, color: 'text-foreground', accent: 'from-primary/30 to-primary/5' },
+            { label: 'Active', value: stats.active, color: 'text-success', accent: 'from-success/30 to-success/5' },
+            { label: 'Ending Soon', value: stats.ending, color: 'text-warning', accent: 'from-warning/30 to-warning/5' },
+            { label: 'Closed', value: stats.closed, color: 'text-muted-foreground', accent: 'from-muted/50 to-muted/10' },
           ].map(s => (
-            <Card key={s.label} className="p-4">
-              <p className="text-sm text-muted-foreground">{s.label}</p>
-              <p className={cn("font-mono text-2xl font-bold", s.color)}>{s.value}</p>
-            </Card>
+            <div key={s.label} className="group relative overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-card hover:shadow-lg hover:-translate-y-0.5 transition-all">
+              <div className={`absolute inset-x-0 -top-px h-px bg-gradient-to-r ${s.accent}`} />
+              <p className="text-sm text-muted-foreground font-medium">{s.label}</p>
+              <p className={cn("font-mono text-3xl font-bold mt-1", s.color)}>{s.value}</p>
+            </div>
           ))}
         </div>
 
         {/* Filters */}
-        <Card className="mb-6">
-          <CardContent className="flex flex-col sm:flex-row gap-3 p-4">
+        <div className="relative overflow-hidden rounded-2xl p-[1px] bg-gradient-to-br from-primary/20 via-border to-border shadow-card mb-6">
+          <div className="rounded-2xl bg-card/90 backdrop-blur-sm flex flex-col sm:flex-row gap-3 p-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -124,22 +152,27 @@ const SellerProducts = () => {
                 <SelectItem value="closed">Closed</SelectItem>
               </SelectContent>
             </Select>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Products table */}
-        <Card>
-          <CardContent className="p-0">
+        <div className="relative overflow-hidden rounded-2xl p-[1px] bg-gradient-to-br from-primary/30 via-border to-border shadow-card">
+          <div className="rounded-2xl bg-card/90 backdrop-blur-sm overflow-hidden">
             {filtered.length === 0 ? (
-              <div className="p-12 text-center">
-                <Package className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-                <p className="text-muted-foreground">No products found.</p>
+              <div className="p-16 text-center">
+                <div className="relative inline-flex items-center justify-center mb-4">
+                  <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/30">
+                    <Package className="h-8 w-8 text-primary" />
+                  </div>
+                </div>
+                <p className="font-display text-xl font-semibold mb-1">No products found</p>
+                <p className="text-sm text-muted-foreground mb-5">Try adjusting your search or filter criteria.</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow>
+                    <TableRow className="border-b border-border bg-muted/30">
                       <TableHead>Product</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">
@@ -161,7 +194,7 @@ const SellerProducts = () => {
                     {filtered.map(product => {
                       const productBids = bids.filter(b => b.auctionId === product.id).length;
                       return (
-                        <TableRow key={product.id} className="group">
+                        <TableRow key={product.id} className="group hover:bg-muted/40 transition-colors">
                           <TableCell>
                             <div className="flex items-center gap-3">
                               <div className="h-14 w-14 rounded-xl overflow-hidden shrink-0 border border-border">
@@ -223,8 +256,8 @@ const SellerProducts = () => {
                 </Table>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
       {/* Delete confirmation */}

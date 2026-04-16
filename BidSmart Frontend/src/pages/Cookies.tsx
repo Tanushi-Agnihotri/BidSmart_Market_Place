@@ -63,39 +63,34 @@ const sections = [
 ];
 
 const Cookies = () => (
-  <div className="relative min-h-screen overflow-hidden pt-24 pb-20 animate-fade-in">
-    {/* Decorative background */}
-    <div className="pointer-events-none absolute inset-0 bg-floating-orbs opacity-60" />
-    <div className="pointer-events-none absolute inset-0 bg-lines-pattern opacity-30" />
-
-    <div className="relative container mx-auto px-4 max-w-6xl">
-      <Link
-        to="/"
-        className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card/60 backdrop-blur px-4 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:border-primary/40 hover:bg-card mb-8 transition-all"
-      >
-        <MdOutlineArrowBack className="h-4 w-4" /> Back to Home
-      </Link>
-
-      {/* Hero */}
-      <div className="relative text-center mb-10">
-        <div className="inline-flex items-center justify-center mb-5">
-          <div className="relative">
-            <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/30 shadow-lg">
-              <MdOutlineCookie className="h-8 w-8 text-primary" />
-            </div>
-          </div>
+  <div className="min-h-screen animate-fade-in">
+    {/* ═══════════ HERO ═══════════ */}
+    <section className="relative overflow-hidden bg-card border-b border-border">
+      <div className="absolute inset-0 bg-dot-pattern opacity-20" />
+      <div className="absolute inset-0 bg-gradient-mesh" />
+      <div className="container mx-auto px-4 pt-28 pb-12 relative z-10 text-center">
+        <div className="inline-flex items-center gap-2.5 rounded-full border border-primary/30 bg-primary/10 backdrop-blur-md px-5 py-2 mb-6 animate-float-up animate-border-glow">
+          <MdOutlineCookie className="h-4 w-4 text-primary" />
+          <span className="text-xs font-bold uppercase tracking-[0.2em] text-primary">Legal</span>
         </div>
-        <span className="inline-block text-xs font-semibold uppercase tracking-[0.2em] text-primary mb-2">
-          Legal · Cookie Policy
-        </span>
-        <h1 className="font-display text-5xl md:text-6xl font-bold tracking-tight bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">
-          Cookie Policy
+        <h1 className="font-display text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight mb-4 animate-float-up delay-100" style={{ animationFillMode: 'both' }}>
+          Cookie <span className="gradient-gold-text">Policy</span>
         </h1>
-        <div className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-border bg-card/60 backdrop-blur px-3 py-1 text-xs text-muted-foreground">
+        <p className="text-muted-foreground max-w-lg mx-auto mb-5 animate-float-up delay-200" style={{ animationFillMode: 'both' }}>
+          How BidSmart uses cookies and similar technologies to improve your experience.
+        </p>
+        <div className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card/60 backdrop-blur px-3 py-1 text-xs text-muted-foreground animate-float-up delay-300" style={{ animationFillMode: 'both' }}>
           <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
           Last updated {LAST_UPDATED}
         </div>
       </div>
+    </section>
+
+    <div className="relative overflow-hidden pb-20">
+    <div className="pointer-events-none absolute inset-0 bg-floating-orbs opacity-60" />
+    <div className="pointer-events-none absolute inset-0 bg-lines-pattern opacity-30" />
+
+    <div className="relative container mx-auto px-4 max-w-6xl pt-10">
 
       {/* Intro */}
       <div className="relative rounded-2xl p-[1px] bg-gradient-to-br from-primary/40 via-border to-border mb-10 shadow-card max-w-3xl mx-auto">
@@ -201,6 +196,7 @@ const Cookies = () => (
           </div>
         </div>
       </div>
+    </div>
     </div>
   </div>
 );
