@@ -1,6 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useApp } from '@/context/AppContext';
 import { useDebounce } from '@/hooks/use-debounce';
+import { adminApi } from '@/lib/apiService';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,11 +25,48 @@ const CHART_COLORS = [
 ];
 
 const Reports = () => {
-  const { auctions, bids } = useApp();
+  const { auctions, bids, authToken } = useApp();
   const [period, setPeriod] = useState('30d');
   const [tableSearch, setTableSearch] = useState('');
   const debouncedTableSearch = useDebounce(tableSearch, 300);
   const { sortKey, sortDir, onSort, sortItems } = useSortState();
+
+  // ── Real stats + chart data from API ─────────────────────────────────────
+  const [apiStats, setApiStats] = useState<{ totalRevenue: number; totalBids: number; activeAuctions: number } | null>(null);
+  const [rawChartData, setRawChartData] = useState<{
+    monthlyRevenue: { month: string; revenue: number }[];
+    dailyBids: { day: string; bids: number }[];
+  }>({ monthlyRevenue: [], dailyBids: [] });
+
+  useEffect(() => {
+    if (!authToken) return;
+    adminApi.getStats().then(s => setApiStats({
+      totalRevenue: s.totalRevenue,
+      totalBids: s.totalBids,
+      activeAuctions: s.activeAuctions,
+    })).catch(() => {});
+    adminApi.getCharts().then(d => setRawChartData(d)).catch(() => {});
+  }, [authToken]);
+
+  // Pad to always show last 6 months (missing → 0)
+  const revenueData = useMemo(() => {
+    const now = new Date();
+    return Array.from({ length: 6 }, (_, i) => {
+      const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
+      const month = d.toLocaleString('en-US', { month: 'short' });
+      const found = rawChartData.monthlyRevenue.find(m => m.month === month);
+      return { month, revenue: Number(found?.revenue ?? 0) };
+    });
+  }, [rawChartData.monthlyRevenue]);
+
+  // Pad to always show Mon–Sun (missing → 0)
+  const bidActivityData = useMemo(() => {
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    return days.map(day => {
+      const found = rawChartData.dailyBids.find(d => d.day === day);
+      return { day, bids: Number(found?.bids ?? 0) };
+    });
+  }, [rawChartData.dailyBids]);
 
   const categoryData = useMemo(() => {
     const map: Record<string, { count: number; revenue: number }> = {};
@@ -40,28 +78,10 @@ const Reports = () => {
     return Object.entries(map).map(([name, d]) => ({ name: name.split(' ')[0], fullName: name, ...d }));
   }, [auctions]);
 
-  const revenueData = useMemo(() => {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-    return months.map((month, i) => ({
-      month,
-      revenue: Math.round(20000 + Math.random() * 80000 + i * 5000),
-      auctions: Math.round(10 + Math.random() * 30 + i * 2),
-    }));
-  }, []);
-
-  const bidActivityData = useMemo(() => {
-    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    return days.map(day => ({
-      day,
-      bids: Math.round(20 + Math.random() * 80),
-      users: Math.round(5 + Math.random() * 25),
-    }));
-  }, []);
-
-  const totalRevenue = auctions.reduce((s, a) => s + a.currentBid, 0);
-  const totalBids = bids.length;
+  const totalRevenue = apiStats?.totalRevenue ?? 0;
+  const totalBids = apiStats?.totalBids ?? 0;
   const avgBidAmount = totalBids ? Math.round(totalRevenue / totalBids) : 0;
-  const activeAuctions = auctions.filter(a => a.status === 'active' || a.status === 'ending-soon').length;
+  const activeAuctions = apiStats?.activeAuctions ?? 0;
 
   const auctionTableData = useMemo(() => {
     const q = debouncedTableSearch.toLowerCase();
@@ -324,11 +344,9 @@ const Reports = () => {
                     <BarChart data={bidActivityData}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(225, 25%, 18%)" />
                       <XAxis dataKey="day" stroke="hsl(220, 15%, 55%)" fontSize={12} />
-                      <YAxis stroke="hsl(220, 15%, 55%)" fontSize={12} />
+                      <YAxis stroke="hsl(220, 15%, 55%)" fontSize={12} allowDecimals={false} />
                       <Tooltip content={<CustomTooltip />} />
-                      <Legend />
                       <Bar dataKey="bids" name="Bids" fill="hsl(42, 50%, 54%)" radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="users" name="Active Users" fill="hsl(160, 84%, 39%)" radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>

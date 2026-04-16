@@ -247,7 +247,7 @@ const AdminDashboard = () => {
               <>
                 <ResponsiveContainer width="100%" height={180}>
                   <PieChart>
-                    <Pie data={chartData.categoryData} cx="50%" cy="50%" innerRadius={50} outerRadius={75} paddingAngle={3} dataKey="value">
+                    <Pie data={chartData.categoryData} cx="50%" cy="50%" innerRadius={50} outerRadius={75} paddingAngle={chartData.categoryData.length > 1 ? 3 : 0} dataKey="value">
                       {chartData.categoryData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                     </Pie>
                     <Tooltip contentStyle={{ background: 'hsl(222,30%,12%)', border: '1px solid hsl(222,20%,20%)', borderRadius: 12, fontSize: 13 }} />
@@ -273,7 +273,7 @@ const AdminDashboard = () => {
             <BarChart data={paddedDailyBids}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(220,20%,20%)" />
               <XAxis dataKey="day" tick={{ fill: 'hsl(220,10%,50%)', fontSize: 12 }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fill: 'hsl(220,10%,50%)', fontSize: 12 }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fill: 'hsl(220,10%,50%)', fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} />
               <Tooltip contentStyle={{ background: 'hsl(222,30%,12%)', border: '1px solid hsl(222,20%,20%)', borderRadius: 12, fontSize: 13 }} />
               <Bar dataKey="bids" fill="hsl(42,50%,54%)" radius={[6, 6, 0, 0]} />
             </BarChart>

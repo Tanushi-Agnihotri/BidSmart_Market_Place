@@ -53,7 +53,6 @@ const Navbar = () => {
   const adminLinks = [
     { to: '/', label: 'Home' },
     { to: '/admin/dashboard', label: 'Dashboard' },
-    { to: '/admin/users', label: 'Users' },
     { to: '/admin/reports', label: 'Reports' },
   ];
 
