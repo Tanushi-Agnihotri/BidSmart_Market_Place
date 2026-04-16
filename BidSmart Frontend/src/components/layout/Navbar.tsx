@@ -12,6 +12,7 @@ const Navbar = () => {
   const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const isHomePage = location.pathname === '/';
   const isScrolled = scrolled || !isHomePage;
   const authRoutes = ['/login', '/register', '/forgot-password', '/reset-password'];
@@ -64,33 +65,45 @@ const Navbar = () => {
 
   const links = currentRole === 'guest' ? guestLinks : authLinks;
 
-  const handleSwitchMode = () => {
-    if (currentUser?.role === 'buyer' && currentRole === 'buyer') {
+  const handleClickBuyer = () => {
+    if (currentRole === 'buyer') return; // already on buyer
+    switchMode();
+    navigate('/buyer/dashboard');
+  };
+
+  const handleClickSeller = () => {
+    if (currentRole === 'seller') return; // already on seller
+    if (currentUser?.role === 'buyer') {
       navigate('/become-seller');
       return;
     }
-    const nextMode = currentRole === 'buyer' ? 'seller' : 'buyer';
     switchMode();
-    navigate(nextMode === 'buyer' ? '/buyer/dashboard' : '/seller/dashboard');
+    navigate('/seller/dashboard');
   };
 
   const ModeSwitchBadge = () => (
     <div
-      onClick={handleSwitchMode}
       className="flex items-center rounded-lg border border-border bg-muted/50 p-0.5 cursor-pointer transition-all hover:border-primary/30"
-      title={currentRole === 'buyer' ? 'Switch to Seller Mode' : 'Switch to Buyer Mode'}
     >
-      <div className={cn(
-        "flex items-center gap-1.5 rounded-md px-2.5 py-1 text-sm font-semibold transition-all",
-        currentRole === 'buyer' ? "bg-card text-primary shadow-sm" : "text-muted-foreground"
-      )}>
+      <div
+        onClick={handleClickBuyer}
+        className={cn(
+          "flex items-center gap-1.5 rounded-md px-2.5 py-1 text-sm font-semibold transition-all",
+          currentRole === 'buyer' ? "bg-card text-primary shadow-sm" : "text-muted-foreground"
+        )}
+        title="Switch to Buyer Mode"
+      >
         <MdOutlineShoppingCart className="h-4 w-4" />
         Buyer
       </div>
-      <div className={cn(
-        "flex items-center gap-1.5 rounded-md px-2.5 py-1 text-sm font-semibold transition-all",
-        currentRole === 'seller' ? "bg-card text-primary shadow-sm" : "text-muted-foreground"
-      )}>
+      <div
+        onClick={handleClickSeller}
+        className={cn(
+          "flex items-center gap-1.5 rounded-md px-2.5 py-1 text-sm font-semibold transition-all",
+          currentRole === 'seller' ? "bg-card text-primary shadow-sm" : "text-muted-foreground"
+        )}
+        title="Switch to Seller Mode"
+      >
         <MdOutlineStorefront className="h-4 w-4" />
         Seller
       </div>
@@ -207,30 +220,46 @@ const Navbar = () => {
                 )}
               </Link>
 
-              {/* User */}
-              <Link to="/profile" className={cn(
-                "flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-lg font-medium transition-all",
-                isScrolled
-                  ? "border-border bg-muted/40 text-foreground hover:bg-muted"
-                  : "border-white/15 bg-white/8 text-white hover:bg-white/15"
-              )}>
-                <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/20">
-                  <MdOutlinePerson className="h-3 w-3 text-primary" />
-                </div>
-                {currentUser?.name?.split(' ')[0]}
-              </Link>
-
-              {/* Logout */}
-              <button
-                onClick={() => { logout(); navigate('/login'); }}
-                className={cn(
-                  "rounded-lg p-2 transition-all",
-                  isScrolled ? "text-muted-foreground hover:text-destructive hover:bg-destructive/10" : "text-white/60 hover:text-white hover:bg-white/10"
+              {/* User dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => setUserMenuOpen(prev => !prev)}
+                  className={cn(
+                    "flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-lg font-medium transition-all",
+                    isScrolled
+                      ? "border-border bg-muted/40 text-foreground hover:bg-muted"
+                      : "border-white/15 bg-white/8 text-white hover:bg-white/15"
+                  )}
+                >
+                  <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/20">
+                    <MdOutlinePerson className="h-3 w-3 text-primary" />
+                  </div>
+                  {currentUser?.name?.split(' ')[0]}
+                </button>
+                {userMenuOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setUserMenuOpen(false)} />
+                    <div className="absolute right-0 top-full mt-2 w-48 rounded-xl border border-border bg-card shadow-lg z-50 overflow-hidden animate-fade-in">
+                      <Link
+                        to="/profile"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="flex items-center gap-2.5 px-4 py-3 text-sm font-medium text-foreground hover:bg-muted transition-colors"
+                      >
+                        <MdOutlinePerson className="h-4 w-4 text-muted-foreground" />
+                        My Profile
+                      </Link>
+                      <div className="h-px bg-border" />
+                      <button
+                        onClick={() => { setUserMenuOpen(false); logout(); navigate('/login'); }}
+                        className="flex w-full items-center gap-2.5 px-4 py-3 text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
+                      >
+                        <MdOutlineLogout className="h-4 w-4" />
+                        Sign Out
+                      </button>
+                    </div>
+                  </>
                 )}
-                title="Logout"
-              >
-                <MdOutlineLogout className="h-5 w-5" />
-              </button>
+              </div>
             </>
           )}
         </div>
@@ -268,7 +297,7 @@ const Navbar = () => {
             ))}
             {canSwitchMode && (
               <button
-                onClick={handleSwitchMode}
+                onClick={currentRole === 'buyer' ? handleClickSeller : handleClickBuyer}
                 className="mt-2 flex items-center justify-center gap-2 rounded-lg border border-border bg-muted/50 px-4 py-2.5 text-lg font-medium transition-all hover:border-primary/30"
               >
                 {currentRole === 'buyer' ? <MdOutlineStorefront className="h-4 w-4 text-primary" /> : <MdOutlineShoppingCart className="h-4 w-4 text-primary" />}
