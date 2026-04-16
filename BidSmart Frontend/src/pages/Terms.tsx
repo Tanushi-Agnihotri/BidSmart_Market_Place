@@ -73,13 +73,12 @@ const Terms = () => (
     </section>
 
     <div className="relative overflow-hidden pb-20">
-    <div className="pointer-events-none absolute inset-0 bg-floating-orbs opacity-60" />
     <div className="pointer-events-none absolute inset-0 bg-lines-pattern opacity-30" />
 
     <div className="relative container mx-auto px-4 max-w-6xl pt-10">
 
-      <div className="relative rounded-2xl p-[1px] bg-gradient-to-br from-primary/40 via-border to-border mb-10 shadow-card max-w-3xl mx-auto">
-        <div className="rounded-2xl bg-card/80 backdrop-blur-sm p-6 md:p-7">
+      <div className="relative rounded-2xl border border-border bg-card mb-10 shadow-card max-w-3xl mx-auto">
+        <div className="p-6 md:p-7">
           <p className="text-lg text-muted-foreground leading-relaxed">
             Welcome to <span className="text-foreground font-semibold">BidSmart</span>. These Terms of Service govern your use of the BidSmart platform, including browsing auctions, placing bids, and listing items for sale. Please read them carefully.
           </p>
@@ -115,8 +114,8 @@ const Terms = () => (
         ))}
       </div>
 
-      <div className="relative mt-10 overflow-hidden rounded-2xl p-[1px] bg-gradient-to-br from-primary/50 via-primary/20 to-primary/5 max-w-3xl mx-auto">
-        <div className="relative rounded-2xl bg-card/90 backdrop-blur-sm p-6 text-center">
+      <div className="relative mt-10 overflow-hidden rounded-2xl border border-border bg-card max-w-3xl mx-auto">
+        <div className="relative p-6 text-center">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary mb-2">Related policies</p>
           <p className="text-base text-muted-foreground mb-5">
             Understand the full picture of how BidSmart handles your data and agreements.

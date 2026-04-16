@@ -28,13 +28,12 @@ const Watchlist = () => {
   return (
     <div className="relative min-h-screen overflow-hidden pt-24 pb-20 animate-fade-in">
       {/* Decorative background */}
-      <div className="pointer-events-none absolute inset-0 bg-floating-orbs opacity-60" />
       <div className="pointer-events-none absolute inset-0 bg-lines-pattern opacity-30" />
 
       <div className="relative container mx-auto px-4">
         {/* Hero header */}
-        <div className="relative overflow-hidden rounded-3xl p-[1px] bg-gradient-to-br from-primary/50 via-primary/20 to-border shadow-card mb-8">
-          <div className="relative rounded-3xl bg-card/90 backdrop-blur-sm p-6 md:p-8">
+        <div className="relative overflow-hidden rounded-3xl border border-border bg-card shadow-card mb-8">
+          <div className="relative p-6 md:p-8">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
               <div className="flex items-start gap-4">
                 <div className="relative shrink-0">
@@ -120,8 +119,8 @@ const Watchlist = () => {
             </div>
           </>
         ) : (
-          <div className="relative overflow-hidden rounded-3xl p-[1px] bg-gradient-to-br from-primary/30 via-border to-border shadow-card">
-            <div className="relative rounded-3xl bg-card/90 backdrop-blur-sm px-6 py-16 md:py-20 text-center">
+          <div className="relative overflow-hidden rounded-3xl border border-border bg-card shadow-card">
+            <div className="relative px-6 py-16 md:py-20 text-center">
               {/* Glowing sparkle */}
               <div className="relative inline-flex items-center justify-center mb-6">
                 <div className="relative flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/25 to-primary/5 border border-primary/30 shadow-lg">

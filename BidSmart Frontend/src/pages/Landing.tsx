@@ -149,7 +149,7 @@ const Landing = () => {
       </section>
 
       {/* ═══════════ FEATURED AUCTIONS ═══════════ */}
-      <section className="relative overflow-hidden bg-floating-orbs">
+      <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-lines-pattern" />
         <div className="container mx-auto px-4 py-24 relative z-10">
           <div className="flex items-end justify-between mb-12">

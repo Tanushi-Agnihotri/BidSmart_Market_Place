@@ -74,19 +74,12 @@ const SellerDashboard = () => {
       <div className="pointer-events-none absolute inset-0 bg-floating-orbs opacity-60" />
       <div className="pointer-events-none absolute inset-0 bg-lines-pattern opacity-30" />
 
-      {/* Extra decorative gradient orbs */}
-      <div className="pointer-events-none absolute top-32 -left-32 h-80 w-80 rounded-full bg-primary/10 blur-[100px] animate-pulse-glow" />
-      <div className="pointer-events-none absolute top-64 -right-24 h-64 w-64 rounded-full bg-violet-500/10 blur-[80px]" style={{ animation: 'orb-float-1 12s ease-in-out infinite' }} />
-      <div className="pointer-events-none absolute bottom-48 left-1/3 h-56 w-56 rounded-full bg-emerald-500/8 blur-[90px]" style={{ animation: 'orb-float-2 15s ease-in-out infinite' }} />
 
       <div className="relative container mx-auto px-4">
         {/* Hero header */}
         <div className="relative animate-float-up">
-          {/* Orbs behind hero card */}
-          <div className="pointer-events-none absolute -top-10 -left-10 h-40 w-40 rounded-full bg-primary/15 blur-[60px]" />
-          <div className="pointer-events-none absolute -bottom-8 -right-8 h-32 w-32 rounded-full bg-primary/10 blur-[50px]" />
 
-          <div className="relative overflow-hidden rounded-3xl p-[1px] bg-gradient-to-br from-primary/50 via-primary/20 to-border shadow-card mb-8">
+          <div className="relative overflow-hidden rounded-3xl border border-border bg-card shadow-card mb-8">
             {/* Shimmer sweep overlay */}
             <div className="absolute inset-0 overflow-hidden rounded-3xl pointer-events-none">
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent" style={{ animation: 'shimmer 4s ease-in-out infinite', backgroundSize: '200% 100%' }} />
@@ -136,7 +129,7 @@ const SellerDashboard = () => {
             <div
               key={card.label}
               className={cn(
-                "group relative rounded-2xl p-[1px] bg-gradient-to-br from-primary/30 via-border to-border shadow-card animate-float-up overflow-hidden",
+                "group relative rounded-2xl border border-border bg-card shadow-card animate-float-up overflow-hidden",
                 i === 0 && 'delay-100',
                 i === 1 && 'delay-200',
                 i === 2 && 'delay-300',
@@ -144,12 +137,7 @@ const SellerDashboard = () => {
               )}
               style={{ opacity: 0, animationFillMode: 'forwards' }}
             >
-              <div className="relative rounded-2xl bg-card/90 backdrop-blur-sm p-5 h-full overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5">
-                {/* Colored accent glow in corner */}
-                <div className={cn("absolute -top-6 -right-6 h-20 w-20 rounded-full bg-gradient-to-br opacity-40 blur-2xl transition-opacity duration-300 group-hover:opacity-70", card.accent)} />
-
-                {/* Top accent line */}
-                <div className={cn("absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity")} />
+              <div className="relative p-5 h-full overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5">
 
                 <div className="flex items-start justify-between relative">
                   <div className={cn("rounded-xl bg-gradient-to-br p-2.5 border transition-transform duration-300 group-hover:scale-110", card.iconBg, card.borderAccent)}>
@@ -179,8 +167,8 @@ const SellerDashboard = () => {
                 View all <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
-            <div className="relative overflow-hidden rounded-2xl p-[1px] bg-gradient-to-br from-primary/30 via-border to-border shadow-card">
-              <div className="rounded-2xl bg-card/90 backdrop-blur-sm overflow-hidden">
+            <div className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-card">
+              <div className="overflow-hidden">
                 {myAuctions.length === 0 ? (
                   <div className="relative p-16 text-center overflow-hidden">
                     {/* Gradient background for empty state */}
@@ -278,8 +266,8 @@ const SellerDashboard = () => {
                 </div>
                 <h2 className="font-display text-2xl font-semibold">Revenue Trend</h2>
               </div>
-              <div className="relative overflow-hidden rounded-2xl p-[1px] bg-gradient-to-br from-primary/30 via-border to-border shadow-card">
-                <div className="rounded-2xl bg-card/90 backdrop-blur-sm p-5">
+              <div className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-card">
+                <div className="p-5">
                   <div className="flex items-baseline justify-between mb-4">
                     <div>
                       <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">6-Month Total</p>
@@ -344,8 +332,8 @@ const SellerDashboard = () => {
                   </span>
                 )}
               </div>
-              <div className="relative overflow-hidden rounded-2xl p-[1px] bg-gradient-to-br from-primary/30 via-border to-border shadow-card">
-                <div className="rounded-2xl bg-card/90 backdrop-blur-sm overflow-hidden">
+              <div className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-card">
+                <div className="overflow-hidden">
                   {recentBids.length === 0 ? (
                     <div className="relative p-8 text-center overflow-hidden">
                       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent" />

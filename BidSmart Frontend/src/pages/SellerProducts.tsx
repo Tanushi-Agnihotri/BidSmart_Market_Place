@@ -75,13 +75,12 @@ const SellerProducts = () => {
   return (
     <div className="relative min-h-screen overflow-hidden pt-24 pb-20 animate-fade-in">
       {/* Decorative background */}
-      <div className="pointer-events-none absolute inset-0 bg-floating-orbs opacity-60" />
       <div className="pointer-events-none absolute inset-0 bg-lines-pattern opacity-30" />
 
       <div className="relative container mx-auto px-4">
         {/* Hero header */}
-        <div className="relative overflow-hidden rounded-3xl p-[1px] bg-gradient-to-br from-primary/50 via-primary/20 to-border shadow-card mb-8">
-          <div className="relative rounded-3xl bg-card/90 backdrop-blur-sm p-6 md:p-8">
+        <div className="relative overflow-hidden rounded-3xl border border-border bg-card shadow-card mb-8">
+          <div className="relative p-6 md:p-8">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-start gap-4">
                 <div className="relative shrink-0">
@@ -128,8 +127,8 @@ const SellerProducts = () => {
         </div>
 
         {/* Filters */}
-        <div className="relative overflow-hidden rounded-2xl p-[1px] bg-gradient-to-br from-primary/20 via-border to-border shadow-card mb-6">
-          <div className="rounded-2xl bg-card/90 backdrop-blur-sm flex flex-col sm:flex-row gap-3 p-4">
+        <div className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-card mb-6">
+          <div className="flex flex-col sm:flex-row gap-3 p-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -156,8 +155,8 @@ const SellerProducts = () => {
         </div>
 
         {/* Products table */}
-        <div className="relative overflow-hidden rounded-2xl p-[1px] bg-gradient-to-br from-primary/30 via-border to-border shadow-card">
-          <div className="rounded-2xl bg-card/90 backdrop-blur-sm overflow-hidden">
+        <div className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-card">
+          <div className="overflow-hidden">
             {filtered.length === 0 ? (
               <div className="p-16 text-center">
                 <div className="relative inline-flex items-center justify-center mb-4">

@@ -220,8 +220,8 @@ const BrowseAuctions = () => {
 
           {/* Advanced Filters Panel (toggle) */}
           {showFilters && (
-            <div className="mb-6 relative overflow-hidden rounded-2xl p-[1px] bg-gradient-to-br from-primary/30 via-border to-border shadow-card animate-fade-in">
-              <div className="rounded-2xl bg-card/90 backdrop-blur-sm p-5">
+            <div className="mb-6 relative overflow-hidden rounded-2xl border border-border bg-card shadow-card animate-fade-in">
+              <div className="p-5">
                 <div>
                   <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2.5">Status</h3>
                   <div className="flex flex-wrap gap-2">
@@ -295,8 +295,8 @@ const BrowseAuctions = () => {
               {paginatedAuctions.map(a => <AuctionCard key={a.id} auction={a} />)}
             </div>
           ) : (
-            <div className="relative overflow-hidden rounded-3xl p-[1px] bg-gradient-to-br from-primary/30 via-border to-border shadow-card mb-10">
-              <div className="relative rounded-3xl bg-card/90 backdrop-blur-sm px-6 py-16 text-center">
+            <div className="relative overflow-hidden rounded-3xl border border-border bg-card shadow-card mb-10">
+              <div className="relative px-6 py-16 text-center">
                 <div className="relative inline-flex items-center justify-center mb-5">
                   <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/30">
                     <Search className="h-8 w-8 text-primary" />

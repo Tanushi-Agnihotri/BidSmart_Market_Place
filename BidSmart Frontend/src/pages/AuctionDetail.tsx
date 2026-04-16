@@ -129,10 +129,7 @@ const AuctionDetail = () => {
   return (
     <div className="relative min-h-screen overflow-hidden pt-24 pb-16 animate-fade-in">
       {/* Decorative background */}
-      <div className="pointer-events-none absolute inset-0 bg-floating-orbs opacity-40" />
       <div className="pointer-events-none absolute inset-0 bg-lines-pattern opacity-20" />
-      <div className="pointer-events-none absolute -top-40 right-0 h-[500px] w-[500px] rounded-full bg-primary/6 blur-[120px]" />
-      <div className="pointer-events-none absolute top-1/2 -left-40 h-[400px] w-[400px] rounded-full bg-violet-500/4 blur-[100px]" />
 
       <div className="relative container mx-auto px-4">
         {/* Back link */}
@@ -144,7 +141,7 @@ const AuctionDetail = () => {
           {/* Left: Image Gallery + Details */}
           <div className="lg:col-span-3 space-y-6 animate-float-up">
             {/* Main Image */}
-            <div className="relative overflow-hidden rounded-2xl p-[1px] bg-gradient-to-br from-primary/30 via-border to-border shadow-card">
+            <div className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-card">
               <div className="relative rounded-2xl overflow-hidden bg-card group">
                 {auction.images && auction.images.length > 0 ? (
                   <img
@@ -219,8 +216,8 @@ const AuctionDetail = () => {
               <p className="text-base text-muted-foreground leading-relaxed">{auction.description}</p>
 
               {/* Seller Card */}
-              <div className="relative overflow-hidden rounded-2xl p-[1px] bg-gradient-to-br from-primary/20 via-border to-border shadow-card">
-                <div className="rounded-2xl bg-card/90 backdrop-blur-sm p-4 flex items-center gap-4">
+              <div className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-card">
+                <div className="p-4 flex items-center gap-4">
                   <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/15 shrink-0">
                     <MdOutlinePerson className="h-6 w-6 text-primary" />
                   </div>
@@ -235,8 +232,8 @@ const AuctionDetail = () => {
 
               {/* Bid History — Below details on left side */}
               {auctionBids.length > 0 && (
-                <div className="relative overflow-hidden rounded-2xl p-[1px] bg-gradient-to-br from-primary/20 via-border to-border shadow-card animate-float-up delay-200">
-                  <div className="rounded-2xl bg-card/90 backdrop-blur-sm p-5">
+                <div className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-card animate-float-up delay-200">
+                  <div className="p-5">
                     <div className="flex items-center gap-2.5 mb-4">
                       <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/15">
                         <MdOutlineHistory className="h-4 w-4 text-primary" />
@@ -285,11 +282,11 @@ const AuctionDetail = () => {
           <div className="lg:col-span-2">
             <div className="sticky top-24 space-y-4">
               {/* Bid Card */}
-              <div className="relative overflow-hidden rounded-2xl p-[1px] bg-gradient-to-br from-primary/40 via-primary/15 to-border shadow-card animate-float-up delay-100">
+              <div className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-card animate-float-up delay-100">
                 {/* Shimmer */}
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent rounded-2xl" style={{ animation: 'shimmer 4s ease-in-out infinite', backgroundSize: '200% 100%' }} />
 
-                <div className="relative rounded-2xl bg-card/95 backdrop-blur-sm p-5 space-y-5">
+                <div className="relative p-5 space-y-5">
                   {/* Top accent */}
                   <div className="absolute top-0 right-0 h-24 w-24 bg-gradient-to-bl from-primary/8 to-transparent rounded-bl-full" />
 

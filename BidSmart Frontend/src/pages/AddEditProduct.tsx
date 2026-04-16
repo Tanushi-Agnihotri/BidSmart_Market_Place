@@ -196,10 +196,7 @@ const AddEditProduct = () => {
   return (
     <div className="relative min-h-screen overflow-hidden animate-fade-in">
       {/* Decorative background */}
-      <div className="pointer-events-none absolute inset-0 bg-floating-orbs opacity-40" />
       <div className="pointer-events-none absolute inset-0 bg-lines-pattern opacity-20" />
-      <div className="pointer-events-none absolute -top-40 right-0 h-[500px] w-[500px] rounded-full bg-primary/6 blur-[120px]" />
-      <div className="pointer-events-none absolute bottom-0 left-0 h-[400px] w-[400px] rounded-full bg-violet-500/4 blur-[100px]" />
 
       <div className="relative flex min-h-screen">
         {/* ── LEFT PANEL ── sticky info sidebar */}
@@ -309,8 +306,8 @@ const AddEditProduct = () => {
 
             <form onSubmit={handleSubmit} className="space-y-5">
               {/* ── Basic Info ── */}
-              <div className="relative overflow-hidden rounded-2xl p-[1px] bg-gradient-to-br from-primary/25 via-border to-border shadow-sm animate-float-up delay-100">
-                <div className="rounded-2xl bg-card/95 backdrop-blur-sm p-5 sm:p-6">
+              <div className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-sm animate-float-up delay-100">
+                <div className="p-5 sm:p-6">
                   <div className="flex items-center gap-3 mb-5">
                     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20">
                       <CategoryIcon className="h-4.5 w-4.5 text-primary" />
@@ -365,8 +362,8 @@ const AddEditProduct = () => {
               </div>
 
               {/* ── Images ── */}
-              <div className="relative overflow-hidden rounded-2xl p-[1px] bg-gradient-to-br from-primary/25 via-border to-border shadow-sm animate-float-up delay-200">
-                <div className="rounded-2xl bg-card/95 backdrop-blur-sm p-5 sm:p-6">
+              <div className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-sm animate-float-up delay-200">
+                <div className="p-5 sm:p-6">
                   <div className="flex items-center gap-3 mb-5">
                     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20">
                       <PhotoLibrary className="h-4.5 w-4.5 text-primary" />
@@ -430,8 +427,8 @@ const AddEditProduct = () => {
               </div>
 
               {/* ── Pricing ── */}
-              <div className="relative overflow-hidden rounded-2xl p-[1px] bg-gradient-to-br from-primary/25 via-border to-border shadow-sm animate-float-up delay-300">
-                <div className="rounded-2xl bg-card/95 backdrop-blur-sm p-5 sm:p-6">
+              <div className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-sm animate-float-up delay-300">
+                <div className="p-5 sm:p-6">
                   <div className="flex items-center gap-3 mb-5">
                     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20">
                       <RupeeSign className="h-4.5 w-4.5 text-primary" />
@@ -470,8 +467,8 @@ const AddEditProduct = () => {
 
               {/* ── Schedule & Duration ── */}
               {!isEdit && (
-                <div className="relative overflow-hidden rounded-2xl p-[1px] bg-gradient-to-br from-primary/25 via-border to-border shadow-sm animate-float-up delay-400">
-                  <div className="rounded-2xl bg-card/95 backdrop-blur-sm p-5 sm:p-6">
+                <div className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-sm animate-float-up delay-400">
+                  <div className="p-5 sm:p-6">
                     <div className="flex items-center gap-3 mb-5">
                       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20">
                         <Schedule className="h-4.5 w-4.5 text-primary" />
