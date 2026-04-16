@@ -89,7 +89,7 @@ const SellerDashboard = () => {
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
                 <div className="flex items-start gap-4">
                   <div className="relative shrink-0">
-                    <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/25 to-primary/5 border border-primary/30 shadow-lg animate-pulse-glow">
+                    <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 border border-primary/20">
                       <Storefront className="h-7 w-7 text-primary" />
                     </div>
                   </div>
