@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { type UserRole, type User, type Auction, type Bid, type Notification, mockUsers, mockAuctions } from '@/data/mockData';
+import { type UserRole, type User, type Auction, type Bid, type Notification, mockUsers } from '@/data/mockData';
 import { auctionApi, bidApi, watchlistApi, notificationApi, toFrontendAuction, toFrontendBid } from '@/lib/apiService';
 
 const AUTH_STORAGE_KEY = 'bidsmart.auth';
@@ -95,7 +95,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [activeMode, setActiveMode] = useState<'buyer' | 'seller' | 'admin' | 'guest'>(
     (storedAuth?.user.role as 'buyer' | 'seller' | 'admin' | 'guest') ?? 'guest'
   );
-  const [auctions, setAuctions] = useState<Auction[]>(mockAuctions);
+  const [auctions, setAuctions] = useState<Auction[]>([]);
   const [bids, setBids] = useState<Bid[]>([]);
   const [watchlist, setWatchlist] = useState<string[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -113,7 +113,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const apiAuctions = await auctionApi.getAll();
       setAuctions(apiAuctions.map(toFrontendAuction));
     } catch {
-      console.info('Backend not available, using mock data');
+      console.info('Backend not available');
+      setAuctions([]);
     } finally {
       setLoading(false);
     }
