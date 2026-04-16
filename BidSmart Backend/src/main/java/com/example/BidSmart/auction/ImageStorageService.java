@@ -20,50 +20,84 @@ public class ImageStorageService {
     );
     private static final long MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
+    private final CloudinaryService cloudinaryService;
     private final Path uploadDir;
+    private final boolean cloudinaryEnabled;
 
-    public ImageStorageService(@Value("${app.upload.dir:uploads}") String uploadPath) {
+    public ImageStorageService(CloudinaryService cloudinaryService,
+                               @Value("${app.upload.dir:uploads}") String uploadPath,
+                               @Value("${cloudinary.url:}") String cloudinaryUrl) {
+        this.cloudinaryService = cloudinaryService;
+        // Cloudinary is active only when a real URL is configured (not placeholder/empty)
+        this.cloudinaryEnabled = cloudinaryUrl != null
+            && !cloudinaryUrl.isBlank()
+            && !cloudinaryUrl.contains("placeholder");
         this.uploadDir = Paths.get(uploadPath).toAbsolutePath().normalize();
         try {
             Files.createDirectories(this.uploadDir);
         } catch (IOException e) {
-            throw new RuntimeException("Could not create upload directory: " + uploadPath, e);
+            // Best-effort — directory may already exist
         }
+        System.out.println("[ImageStorage] mode = " + (cloudinaryEnabled ? "CLOUDINARY" : "LOCAL (set CLOUDINARY_URL to enable)"));
     }
 
+    /**
+     * Stores a file. Uses Cloudinary if configured, otherwise local disk.
+     * Returns a Cloudinary HTTPS URL or a local filename (e.g. "uuid.jpg").
+     */
     public String store(MultipartFile file) {
         validateFile(file);
-
-        String originalName = file.getOriginalFilename();
-        String extension = "";
-        if (originalName != null && originalName.contains(".")) {
-            extension = originalName.substring(originalName.lastIndexOf("."));
-        }
-        String storedName = UUID.randomUUID() + extension;
-
-        try {
-            Path target = uploadDir.resolve(storedName);
-            Files.copy(file.getInputStream(), target, StandardCopyOption.REPLACE_EXISTING);
-            return storedName;
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to store file", e);
+        if (cloudinaryEnabled) {
+            try {
+                return cloudinaryService.upload(file);
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to upload image to Cloudinary", e);
+            }
+        } else {
+            // Local storage fallback (for development without Cloudinary)
+            String ext = "";
+            String originalName = file.getOriginalFilename();
+            if (originalName != null && originalName.contains(".")) {
+                ext = originalName.substring(originalName.lastIndexOf("."));
+            }
+            String storedName = UUID.randomUUID() + ext;
+            try {
+                Path target = uploadDir.resolve(storedName);
+                Files.copy(file.getInputStream(), target, StandardCopyOption.REPLACE_EXISTING);
+                return storedName;
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to store file locally", e);
+            }
         }
     }
 
+    /**
+     * Serves a local file by name — used by GET /api/images/{fileName}.
+     * Backward-compatible for old local uploads and local dev mode.
+     */
     public Path load(String fileName) {
         Path resolved = uploadDir.resolve(fileName).normalize();
-        // Prevent path traversal — resolved path must stay inside uploadDir
+        // Prevent path traversal
         if (!resolved.startsWith(uploadDir)) {
             throw new IllegalArgumentException("Invalid file path");
         }
         return resolved;
     }
 
-    public void delete(String fileName) {
-        try {
-            Files.deleteIfExists(uploadDir.resolve(fileName));
-        } catch (IOException e) {
-            // log and continue
+    /**
+     * Deletes an image — from Cloudinary if URL, from local disk otherwise.
+     */
+    public void delete(String filePath) {
+        if (filePath == null) return;
+        if (filePath.startsWith("https://res.cloudinary.com")) {
+            String publicId = cloudinaryService.extractPublicId(filePath);
+            cloudinaryService.delete(publicId);
+        } else {
+            try {
+                Files.deleteIfExists(uploadDir.resolve(filePath));
+            } catch (IOException e) {
+                // ignore
+            }
         }
     }
 

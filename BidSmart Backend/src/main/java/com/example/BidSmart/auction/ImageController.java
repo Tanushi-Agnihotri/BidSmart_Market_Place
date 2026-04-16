@@ -137,9 +137,14 @@ public class ImageController {
     // Response DTO
     public record ImageResponse(UUID id, String url, String fileName, long fileSize, int sortOrder) {
         static ImageResponse from(AuctionImage img) {
+            String filePath = img.getFilePath();
+            // New images have full Cloudinary URLs; old local images use /api/images/ prefix
+            String url = (filePath != null && filePath.startsWith("http"))
+                ? filePath
+                : "/api/images/" + filePath;
             return new ImageResponse(
                 img.getId(),
-                "/api/images/" + img.getFilePath(),
+                url,
                 img.getFileName(),
                 img.getFileSize(),
                 img.getSortOrder()

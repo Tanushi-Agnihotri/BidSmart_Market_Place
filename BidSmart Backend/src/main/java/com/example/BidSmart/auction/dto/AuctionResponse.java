@@ -35,7 +35,11 @@ public record AuctionResponse(
 
     public static AuctionResponse from(Auction auction, List<AuctionImage> auctionImages) {
         List<String> imageUrls = auctionImages.stream()
-            .map(img -> "/api/images/" + img.getFilePath())
+            .map(img -> {
+                String fp = img.getFilePath();
+                // Cloudinary images already have a full HTTPS URL
+                return (fp != null && fp.startsWith("http")) ? fp : "/api/images/" + fp;
+            })
             .toList();
 
         return new AuctionResponse(
