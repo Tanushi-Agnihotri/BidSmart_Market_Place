@@ -186,6 +186,8 @@ export function toFrontendAuction(a: ApiAuction): Auction {
     images: (a.images || []).map(img => img.startsWith('/') ? apiUrl(img) : img),
     totalBids: a.totalBids,
     watchlistCount: a.watchlistCount,
+    verificationStatus: a.verificationStatus,
+    verificationReason: a.verificationReason,
   };
 }
 

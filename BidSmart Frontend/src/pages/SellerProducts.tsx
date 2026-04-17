@@ -1,7 +1,9 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { MdOutlineAdd as Plus, MdOutlineSearch as Search, MdOutlineEdit as Edit, MdOutlineDelete as Trash2, MdOutlineVisibility as Eye, MdOutlineMoreHoriz as MoreHorizontal, MdOutlineInventory2 as Package, MdOutlineFilterList as Filter } from 'react-icons/md';
 import { useApp } from '@/context/AppContext';
+import { auctionApi, toFrontendAuction } from '@/lib/apiService';
+import type { Auction } from '@/data/mockData';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,21 +19,38 @@ import { toast } from 'sonner';
 import SellerAccessGate from '@/components/shared/SellerAccessGate';
 
 const SellerProducts = () => {
-  const { currentUser, currentRole, auctions, bids, deleteAuction } = useApp();
+  const { currentUser, currentRole, bids, deleteAuction } = useApp();
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 300);
   const [statusFilter, setStatusFilter] = useState('all');
+  const [verifyFilter, setVerifyFilter] = useState('all');
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const { sortKey, sortDir, onSort, sortItems } = useSortState();
+  const [myProducts, setMyProducts] = useState<Auction[]>([]);
 
-  const myProducts = useMemo(() => auctions.filter(a => a.sellerId === currentUser?.id), [auctions, currentUser]);
+  useEffect(() => {
+    if (!currentUser || currentRole !== 'seller') return;
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const list = await auctionApi.getBySeller(currentUser.id);
+        if (!cancelled) setMyProducts(list.map(toFrontendAuction));
+      } catch {
+        if (!cancelled) setMyProducts([]);
+      }
+    };
+    load();
+    const interval = setInterval(load, 15000);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, [currentUser, currentRole]);
 
   const filtered = useMemo(() => {
     const q = debouncedSearch.toLowerCase();
     let items = myProducts.filter(a => {
       const matchSearch = a.title.toLowerCase().includes(q) || a.category.toLowerCase().includes(q);
       const matchStatus = statusFilter === 'all' || a.status === statusFilter;
-      return matchSearch && matchStatus;
+      const matchVerify = verifyFilter === 'all' || a.verificationStatus === verifyFilter;
+      return matchSearch && matchStatus && matchVerify;
     });
     return sortItems(items, (item, key) => {
       switch (key) {
@@ -42,13 +61,13 @@ const SellerProducts = () => {
         default: return item.title;
       }
     });
-  }, [myProducts, debouncedSearch, statusFilter, sortKey, sortDir]);
+  }, [myProducts, debouncedSearch, statusFilter, verifyFilter, sortKey, sortDir]);
 
   const stats = useMemo(() => ({
     total: myProducts.length,
-    active: myProducts.filter(a => a.status === 'active').length,
-    ending: myProducts.filter(a => a.status === 'ending-soon').length,
-    closed: myProducts.filter(a => a.status === 'closed').length,
+    pending: myProducts.filter(a => a.verificationStatus === 'PENDING').length,
+    accepted: myProducts.filter(a => a.verificationStatus === 'VERIFIED').length,
+    rejected: myProducts.filter(a => a.verificationStatus === 'REJECTED').length,
   }), [myProducts]);
 
   if (currentRole !== 'seller') {
@@ -114,9 +133,9 @@ const SellerProducts = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {[
             { label: 'Total', value: stats.total, color: 'text-foreground', accent: 'from-primary/30 to-primary/5' },
-            { label: 'Active', value: stats.active, color: 'text-success', accent: 'from-success/30 to-success/5' },
-            { label: 'Ending Soon', value: stats.ending, color: 'text-warning', accent: 'from-warning/30 to-warning/5' },
-            { label: 'Closed', value: stats.closed, color: 'text-muted-foreground', accent: 'from-muted/50 to-muted/10' },
+            { label: 'Pending Review', value: stats.pending, color: 'text-warning', accent: 'from-warning/30 to-warning/5' },
+            { label: 'Accepted', value: stats.accepted, color: 'text-success', accent: 'from-success/30 to-success/5' },
+            { label: 'Rejected', value: stats.rejected, color: 'text-destructive', accent: 'from-destructive/30 to-destructive/5' },
           ].map(s => (
             <div key={s.label} className="group relative overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-card hover:shadow-lg hover:-translate-y-0.5 transition-all">
               <div className={`absolute inset-x-0 -top-px h-px bg-gradient-to-r ${s.accent}`} />
@@ -149,6 +168,18 @@ const SellerProducts = () => {
                 <SelectItem value="ending-soon">Ending Soon</SelectItem>
                 <SelectItem value="upcoming">Upcoming</SelectItem>
                 <SelectItem value="closed">Closed</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={verifyFilter} onValueChange={setVerifyFilter}>
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <Filter className="h-4 w-4 mr-2 text-muted-foreground" />
+                <SelectValue placeholder="Verification" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Verification</SelectItem>
+                <SelectItem value="PENDING">Pending Review</SelectItem>
+                <SelectItem value="VERIFIED">Accepted</SelectItem>
+                <SelectItem value="REJECTED">Rejected</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -211,7 +242,20 @@ const SellerProducts = () => {
                               </div>
                             </div>
                           </TableCell>
-                          <TableCell><StatusBadge status={product.status} /></TableCell>
+                          <TableCell>
+                            <div className="flex flex-col gap-1">
+                              <StatusBadge status={product.status} />
+                              {product.verificationStatus === 'PENDING' && (
+                                <span className="inline-flex w-fit items-center rounded-md bg-warning/10 text-warning border border-warning/30 px-2 py-0.5 text-[11px] font-semibold">Pending review</span>
+                              )}
+                              {product.verificationStatus === 'REJECTED' && (
+                                <span
+                                  className="inline-flex w-fit items-center rounded-md bg-destructive/10 text-destructive border border-destructive/30 px-2 py-0.5 text-[11px] font-semibold"
+                                  title={product.verificationReason || 'Rejected by admin'}
+                                >Rejected</span>
+                              )}
+                            </div>
+                          </TableCell>
                           <TableCell className="text-right font-mono text-base">₹{product.basePrice.toLocaleString()}</TableCell>
                           <TableCell className="text-right font-mono text-base font-semibold text-primary">
                             {product.currentBid > 0 ? `₹${product.currentBid.toLocaleString()}` : '—'}

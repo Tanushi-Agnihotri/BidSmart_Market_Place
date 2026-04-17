@@ -51,6 +51,8 @@ export interface Auction {
   images: string[];
   totalBids: number;
   watchlistCount: number;
+  verificationStatus?: 'PENDING' | 'VERIFIED' | 'REJECTED';
+  verificationReason?: string | null;
 }
 
 export interface Bid {

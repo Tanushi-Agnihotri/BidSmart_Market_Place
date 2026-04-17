@@ -21,6 +21,8 @@ import com.example.BidSmart.auction.AuctionStatus;
 import com.example.BidSmart.auction.dto.AuctionResponse;
 import com.example.BidSmart.bid.BidRepository;
 import com.example.BidSmart.exception.ApiException;
+import com.example.BidSmart.notification.NotificationService;
+import com.example.BidSmart.notification.NotificationType;
 import com.example.BidSmart.user.SellerProfile;
 import com.example.BidSmart.user.SellerProfileRepository;
 import com.example.BidSmart.user.User;
@@ -39,14 +41,16 @@ public class AdminService {
     private final AuctionImageRepository auctionImageRepository;
     private final WatchlistRepository watchlistRepository;
     private final SellerProfileRepository sellerProfileRepository;
+    private final NotificationService notificationService;
 
-    public AdminService(UserRepository userRepository, AuctionRepository auctionRepository, BidRepository bidRepository, AuctionImageRepository auctionImageRepository, WatchlistRepository watchlistRepository, SellerProfileRepository sellerProfileRepository) {
+    public AdminService(UserRepository userRepository, AuctionRepository auctionRepository, BidRepository bidRepository, AuctionImageRepository auctionImageRepository, WatchlistRepository watchlistRepository, SellerProfileRepository sellerProfileRepository, NotificationService notificationService) {
         this.userRepository = userRepository;
         this.auctionRepository = auctionRepository;
         this.bidRepository = bidRepository;
         this.auctionImageRepository = auctionImageRepository;
         this.watchlistRepository = watchlistRepository;
         this.sellerProfileRepository = sellerProfileRepository;
+        this.notificationService = notificationService;
     }
 
     @Transactional(readOnly = true)
@@ -181,6 +185,22 @@ public class AdminService {
         profile.setReviewedAt(OffsetDateTime.now());
         profile.setReviewedBy(admin.getId());
         SellerProfile saved = sellerProfileRepository.save(profile);
+
+        if (decision == VerificationStatus.VERIFIED) {
+            notificationService.createNotification(
+                saved.getUser(),
+                NotificationType.SYSTEM,
+                "Seller account verified",
+                "Your seller profile has been approved. You can now create auctions."
+            );
+        } else {
+            notificationService.createNotification(
+                saved.getUser(),
+                NotificationType.SYSTEM,
+                "Seller application rejected",
+                "Your seller application was rejected." + (reason != null && !reason.isBlank() ? " Reason: " + reason : "")
+            );
+        }
         return AdminSellerResponse.from(saved);
     }
 
@@ -207,6 +227,22 @@ public class AdminService {
         auction.setVerifiedAt(OffsetDateTime.now());
         auction.setVerifiedBy(admin.getId());
         Auction saved = auctionRepository.save(auction);
+
+        if (decision == VerificationStatus.VERIFIED) {
+            notificationService.createNotification(
+                saved.getSeller(),
+                NotificationType.AUCTION,
+                "Auction approved: " + saved.getTitle(),
+                "Your auction is now live and visible to buyers."
+            );
+        } else {
+            notificationService.createNotification(
+                saved.getSeller(),
+                NotificationType.AUCTION,
+                "Auction rejected: " + saved.getTitle(),
+                "Your auction was rejected." + (reason != null && !reason.isBlank() ? " Reason: " + reason : "")
+            );
+        }
         List<AuctionImage> images = auctionImageRepository.findByAuctionIdOrderBySortOrder(saved.getId());
         return AuctionResponse.from(saved, images);
     }
