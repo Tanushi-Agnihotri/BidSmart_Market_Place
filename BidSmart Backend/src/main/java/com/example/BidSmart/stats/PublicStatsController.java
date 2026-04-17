@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.BidSmart.auction.AuctionRepository;
 import com.example.BidSmart.bid.BidRepository;
 import com.example.BidSmart.user.UserRepository;
+import com.example.BidSmart.user.VerificationStatus;
 
 @RestController
 @RequestMapping("/api/stats")
@@ -28,7 +29,7 @@ public class PublicStatsController {
     @GetMapping
     @Transactional(readOnly = true)
     public PublicStatsResponse getPublicStats() {
-        long totalAuctions = auctionRepository.count();
+        long totalAuctions = auctionRepository.countByVerificationStatus(VerificationStatus.VERIFIED);
         long totalBids = bidRepository.count();
         long activeUsers = userRepository.count();
         BigDecimal totalRevenue = auctionRepository.sumClosedAuctionRevenue();

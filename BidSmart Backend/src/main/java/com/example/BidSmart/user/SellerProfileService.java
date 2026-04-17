@@ -13,24 +13,26 @@ import com.example.BidSmart.user.dto.BecomeSellerRequest;
 public class SellerProfileService {
 
     private final SellerProfileRepository profileRepository;
-    private final UserRepository userRepository;
     private final ImageStorageService imageStorageService;
 
-    public SellerProfileService(SellerProfileRepository profileRepository, UserRepository userRepository, ImageStorageService imageStorageService) {
+    public SellerProfileService(SellerProfileRepository profileRepository, ImageStorageService imageStorageService) {
         this.profileRepository = profileRepository;
-        this.userRepository = userRepository;
         this.imageStorageService = imageStorageService;
     }
 
     @Transactional
     public SellerProfile createProfile(User user, BecomeSellerRequest request, MultipartFile idDocument) {
-        if (profileRepository.findByUserId(user.getId()).isPresent()) {
-            throw new ApiException(HttpStatus.BAD_REQUEST, "Seller profile already exists");
-        }
+        SellerProfile profile = profileRepository.findByUserId(user.getId())
+            .map(existing -> {
+                if (existing.getStatus() != VerificationStatus.REJECTED) {
+                    throw new ApiException(HttpStatus.BAD_REQUEST, "Seller profile already exists");
+                }
+                return existing;
+            })
+            .orElseGet(SellerProfile::new);
 
         String idUrl = imageStorageService.store(idDocument);
 
-        SellerProfile profile = new SellerProfile();
         profile.setUser(user);
         profile.setStoreName(request.storeName());
         profile.setBusinessCategory(request.businessCategory());
@@ -42,9 +44,9 @@ public class SellerProfileService {
         profile.setAccountNumber(request.accountNumber());
         profile.setIdDocumentUrl(idUrl);
         profile.setStatus(VerificationStatus.PENDING);
-
-        user.setRole(UserRole.SELLER);
-        userRepository.save(user);
+        profile.setRejectionReason(null);
+        profile.setReviewedAt(null);
+        profile.setReviewedBy(null);
 
         return profileRepository.save(profile);
     }

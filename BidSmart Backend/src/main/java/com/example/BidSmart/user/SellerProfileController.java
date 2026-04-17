@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.example.BidSmart.user.dto.BecomeSellerRequest;
+import com.example.BidSmart.user.dto.SellerProfileStatusResponse;
 
 import jakarta.validation.Valid;
 
@@ -35,8 +36,8 @@ public class SellerProfileController {
     }
     
     @GetMapping
-    public ResponseEntity<SellerProfile> getMyProfile(Authentication authentication) {
+    public ResponseEntity<SellerProfileStatusResponse> getMyProfile(Authentication authentication) {
         User user = (User) authentication.getPrincipal();
-        return ResponseEntity.ok(profileService.getProfile(user));
+        return ResponseEntity.ok(SellerProfileStatusResponse.from(profileService.getProfile(user)));
     }
 }

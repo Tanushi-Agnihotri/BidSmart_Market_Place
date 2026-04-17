@@ -186,6 +186,12 @@ public class AdminService {
         profile.setReviewedBy(admin.getId());
         SellerProfile saved = sellerProfileRepository.save(profile);
 
+        User profileUser = saved.getUser();
+        if (decision == VerificationStatus.VERIFIED && profileUser.getRole() != UserRole.ADMIN) {
+            profileUser.setRole(UserRole.SELLER);
+            userRepository.save(profileUser);
+        }
+
         if (decision == VerificationStatus.VERIFIED) {
             notificationService.createNotification(
                 saved.getUser(),

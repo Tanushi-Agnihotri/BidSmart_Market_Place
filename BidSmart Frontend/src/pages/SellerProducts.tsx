@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { MdOutlineAdd as Plus, MdOutlineSearch as Search, MdOutlineEdit as Edit, MdOutlineDelete as Trash2, MdOutlineVisibility as Eye, MdOutlineMoreHoriz as MoreHorizontal, MdOutlineInventory2 as Package, MdOutlineFilterList as Filter } from 'react-icons/md';
 import { useApp } from '@/context/AppContext';
-import { auctionApi, toFrontendAuction } from '@/lib/apiService';
+import { auctionApi, sellerProfileApi, toFrontendAuction, type ApiMySellerProfile } from '@/lib/apiService';
 import type { Auction } from '@/data/mockData';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Button } from '@/components/ui/button';
@@ -27,14 +27,20 @@ const SellerProducts = () => {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const { sortKey, sortDir, onSort, sortItems } = useSortState();
   const [myProducts, setMyProducts] = useState<Auction[]>([]);
+  const [sellerProfile, setSellerProfile] = useState<ApiMySellerProfile | null>(null);
 
   useEffect(() => {
     if (!currentUser || currentRole !== 'seller') return;
     let cancelled = false;
     const load = async () => {
       try {
-        const list = await auctionApi.getBySeller(currentUser.id);
-        if (!cancelled) setMyProducts(list.map(toFrontendAuction));
+        const [list, profile] = await Promise.all([
+          auctionApi.getBySeller(currentUser.id),
+          sellerProfileApi.getMine().catch(() => null),
+        ]);
+        if (cancelled) return;
+        setMyProducts(list.map(toFrontendAuction));
+        setSellerProfile(profile);
       } catch {
         if (!cancelled) setMyProducts([]);
       }
@@ -128,6 +134,28 @@ const SellerProducts = () => {
             </div>
           </div>
         </div>
+
+        {sellerProfile && sellerProfile.status !== 'VERIFIED' && (
+          <div className={cn(
+            "mb-6 rounded-2xl border p-4 shadow-card",
+            sellerProfile.status === 'PENDING' && "border-warning/40 bg-warning/5",
+            sellerProfile.status === 'REJECTED' && "border-destructive/40 bg-destructive/5",
+          )}>
+            {sellerProfile.status === 'PENDING' ? (
+              <>
+                <p className="font-semibold text-warning">Seller application under review</p>
+                <p className="text-sm text-muted-foreground mt-1">Admin approval pending. You can't create new auctions until your seller account is verified.</p>
+              </>
+            ) : (
+              <>
+                <p className="font-semibold text-destructive">Seller application rejected</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {sellerProfile.rejectionReason || 'Your seller application was rejected by the admin.'}
+                </p>
+              </>
+            )}
+          </div>
+        )}
 
         {/* Quick stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">

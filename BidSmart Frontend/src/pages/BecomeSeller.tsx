@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { sellerProfileApi, type ApiMySellerProfile } from '@/lib/apiService';
 import {
   MdOutlineVerifiedUser,
   MdOutlineAccountBalance,
@@ -23,6 +24,23 @@ const BecomeSeller = () => {
   const navigate = useNavigate();
   const { upgradeRole } = useApp();
   const [step, setStep] = useState(1);
+  const [existingProfile, setExistingProfile] = useState<ApiMySellerProfile | null>(null);
+  const [loadingProfile, setLoadingProfile] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const p = await sellerProfileApi.getMine();
+        if (!cancelled) setExistingProfile(p);
+      } catch {
+        if (!cancelled) setExistingProfile(null);
+      } finally {
+        if (!cancelled) setLoadingProfile(false);
+      }
+    };
+    load();
+  }, []);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [idFile, setIdFile] = useState<File | null>(null);
   const [formData, setFormData] = useState({
@@ -73,9 +91,11 @@ const BecomeSeller = () => {
       const { userApi } = await import('@/lib/apiService');
       await userApi.becomeSeller(data);
 
-      toast.success('Your Seller Profile has been created! Welcome to BidSmart selling.');
-      upgradeRole('seller');
-      navigate('/seller/dashboard');
+      toast.success('Application submitted. Our team will review it shortly.');
+      try {
+        const p = await sellerProfileApi.getMine();
+        setExistingProfile(p);
+      } catch {}
     } catch (err: any) {
       console.error('[BecomeSeller] Submit error:', err);
       const msg = err?.message || 'Failed to submit application';
@@ -94,8 +114,46 @@ const BecomeSeller = () => {
     { icon: MdOutlineGroup, text: 'Dedicated seller support team' },
   ];
 
+  if (loadingProfile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-muted-foreground">Loading…</p>
+      </div>
+    );
+  }
+
+  if (existingProfile && existingProfile.status === 'PENDING') {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4 pt-24 pb-12 animate-fade-in">
+        <div className="max-w-md w-full rounded-2xl border border-warning/40 bg-warning/5 p-8 text-center shadow-card">
+          <MdOutlineVerifiedUser className="h-14 w-14 mx-auto text-warning mb-4" />
+          <h2 className="font-display text-2xl font-bold mb-2">Application Under Review</h2>
+          <p className="text-muted-foreground mb-1">
+            Your seller application for <strong>{existingProfile.storeName}</strong> is pending admin approval.
+          </p>
+          <p className="text-sm text-muted-foreground mt-4">
+            You'll get a notification when it's reviewed.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (existingProfile && existingProfile.status === 'VERIFIED') {
+    navigate('/seller/dashboard', { replace: true });
+    return null;
+  }
+
   return (
     <div className="min-h-screen grid lg:grid-cols-[1.1fr_1fr] animate-fade-in">
+      {existingProfile && existingProfile.status === 'REJECTED' && (
+        <div className="lg:col-span-2 mx-4 mt-24 rounded-2xl border border-destructive/40 bg-destructive/5 p-4">
+          <p className="font-semibold text-destructive">Previous application rejected</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            {existingProfile.rejectionReason || 'Your earlier application was rejected. Please review and re-submit below.'}
+          </p>
+        </div>
+      )}
       {/* Left Panel — Hero */}
       <div className="hidden lg:flex flex-col justify-center items-center relative overflow-hidden pt-16">
         <img src={loginImg} alt="" className="absolute inset-0 h-full w-full object-cover animate-hero-zoom" />

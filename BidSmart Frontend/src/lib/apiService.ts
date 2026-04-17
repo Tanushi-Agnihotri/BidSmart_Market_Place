@@ -253,6 +253,19 @@ export const watchlistApi = {
   check: (auctionId: string) => request<ApiWatchlistStatus>(`/api/watchlist/check/${auctionId}`),
 };
 
+// Seller profile (own)
+export interface ApiMySellerProfile {
+  status: VerificationStatus;
+  rejectionReason: string | null;
+  reviewedAt: string | null;
+  createdAt: string;
+  storeName: string;
+}
+
+export const sellerProfileApi = {
+  getMine: () => request<ApiMySellerProfile>('/api/users/me/seller-profile'),
+};
+
 // Notifications
 export const notificationApi = {
   getMine: () => request<ApiNotification[]>('/api/notifications'),

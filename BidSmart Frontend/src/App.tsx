@@ -87,7 +87,7 @@ const App = () => (
             <Route path="/notifications" element={<ProtectedRoute allowedRoles={['buyer', 'seller', 'admin']}><Notifications /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute allowedRoles={['buyer', 'seller', 'admin']}><Profile /></ProtectedRoute>} />
             <Route path="/auctions/:id/winner" element={<ProtectedRoute allowedRoles={['buyer', 'seller', 'admin']}><WinnerDeclaration /></ProtectedRoute>} />
-            <Route path="/become-seller" element={<ProtectedRoute allowedRoles={['buyer', 'guest']}><BecomeSeller /></ProtectedRoute>} />
+            <Route path="/become-seller" element={<ProtectedRoute allowedRoles={['buyer', 'guest', 'seller']}><BecomeSeller /></ProtectedRoute>} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>
