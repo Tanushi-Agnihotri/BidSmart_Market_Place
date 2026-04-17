@@ -15,7 +15,7 @@ import AuctionCard from '@/components/shared/AuctionCard';
 import { categories } from '@/data/mockData';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import heroImg from '@/assets/About.png';
+import heroImg from '@/assets/About.jpg';
 
 const ITEMS_PER_PAGE = 12;
 

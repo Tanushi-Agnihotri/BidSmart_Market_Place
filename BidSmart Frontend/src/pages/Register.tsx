@@ -13,7 +13,7 @@ import {
   MdOutlineVisibilityOff as MdVisibilityOff,
   MdOutlineEmojiEvents,
 } from 'react-icons/md';
-import loginImg from '@/assets/About.png';
+import loginImg from '@/assets/About.jpg';
 import { cn } from '@/lib/utils';
 import { apiUrl } from '@/lib/api';
 import { toast } from 'sonner';

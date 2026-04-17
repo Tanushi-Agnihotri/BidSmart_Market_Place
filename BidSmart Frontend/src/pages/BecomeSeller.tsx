@@ -17,7 +17,7 @@ import {
 import { useApp } from '@/context/AppContext';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import loginImg from '@/assets/About.png';
+import loginImg from '@/assets/About.jpg';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const BecomeSeller = () => {

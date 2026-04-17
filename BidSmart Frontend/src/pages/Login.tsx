@@ -4,7 +4,7 @@ import { MdOutlineVisibility as MdVisibility, MdOutlineVisibilityOff as MdVisibi
 import { useGoogleLogin } from '@react-oauth/google';
 import { useApp } from '@/context/AppContext';
 import type { User, UserRole } from '@/data/mockData';
-import loginImg from '@/assets/About.png';
+import loginImg from '@/assets/About.jpg';
 import { toast } from 'sonner';
 import { apiUrl } from '@/lib/api';
 import { cn } from '@/lib/utils';

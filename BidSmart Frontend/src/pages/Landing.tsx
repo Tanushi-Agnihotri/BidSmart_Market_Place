@@ -5,7 +5,7 @@ import { useApp } from '@/context/AppContext';
 import AuctionCard from '@/components/shared/AuctionCard';
 import { mockTestimonials, categories } from '@/data/mockData';
 import { auctionApi, statsApi, type ApiPublicStats } from '@/lib/apiService';
-import heroImg from '@/assets/browse.png';
+import heroImg from '@/assets/browse.jpg';
 import artImg from '@/assets/auction-art.jpg';
 import jewelryImg from '@/assets/auction-jewelry.jpg';
 import watchImg from '@/assets/auction-watch.jpg';
