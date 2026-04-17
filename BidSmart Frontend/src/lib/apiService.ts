@@ -376,6 +376,11 @@ export const adminApi = {
       method: 'PATCH',
       body: JSON.stringify({ status }),
     }),
+  updateUserRole: (userId: string, role: 'BUYER' | 'SELLER') =>
+    request<ApiAdminUser>(`/api/admin/users/${userId}/role`, {
+      method: 'PATCH',
+      body: JSON.stringify({ role }),
+    }),
   deleteUser: (userId: string) =>
     request<void>(`/api/admin/users/${userId}`, { method: 'DELETE' }),
   deleteAuction: (auctionId: string) =>

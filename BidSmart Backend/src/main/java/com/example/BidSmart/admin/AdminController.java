@@ -18,6 +18,7 @@ import com.example.BidSmart.admin.dto.AdminSellerResponse;
 import com.example.BidSmart.admin.dto.AdminUserResponse;
 import com.example.BidSmart.admin.dto.ChartDataResponse;
 import com.example.BidSmart.admin.dto.DashboardStatsResponse;
+import com.example.BidSmart.admin.dto.UpdateUserRoleRequest;
 import com.example.BidSmart.admin.dto.UpdateUserStatusRequest;
 import com.example.BidSmart.admin.dto.VerifyRequest;
 import com.example.BidSmart.auction.dto.AuctionResponse;
@@ -56,6 +57,13 @@ public class AdminController {
             @PathVariable UUID id,
             @Valid @RequestBody UpdateUserStatusRequest request) {
         return ResponseEntity.ok(adminService.updateUserStatus(id, request.status()));
+    }
+
+    @PatchMapping("/users/{id}/role")
+    public ResponseEntity<AdminUserResponse> updateUserRole(
+            @PathVariable UUID id,
+            @Valid @RequestBody UpdateUserRoleRequest request) {
+        return ResponseEntity.ok(adminService.updateUserRole(id, request.role()));
     }
 
     @DeleteMapping("/users/{id}")

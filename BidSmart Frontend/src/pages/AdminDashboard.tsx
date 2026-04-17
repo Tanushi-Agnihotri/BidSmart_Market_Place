@@ -154,6 +154,17 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleRevertToBuyer = async (userId: string) => {
+    if (!confirm('Revert this seller to buyer? Their listings will be hidden and they will need to re-apply.')) return;
+    try {
+      await adminApi.updateUserRole(userId, 'BUYER');
+      setApiUsers(prev => prev.map(u => u.id === userId ? { ...u, role: 'buyer' as User['role'] } : u));
+      toast({ title: 'Seller reverted to buyer' });
+    } catch {
+      toast({ title: 'Action failed', variant: 'destructive' });
+    }
+  };
+
   const handleSuspendUser = async (userId: string, currentStatus: string) => {
     const newStatus = currentStatus === 'active' ? 'SUSPENDED' : 'ACTIVE';
     try {
@@ -431,6 +442,15 @@ const AdminDashboard = () => {
                         <td className="px-5 py-3 text-right">
                           {user.role !== 'admin' && (
                             <div className="flex items-center justify-end gap-1">
+                              {user.role === 'seller' && (
+                                <button
+                                  onClick={() => handleRevertToBuyer(user.id)}
+                                  className="rounded-lg px-2.5 py-1 text-xs font-semibold bg-orange-500/10 text-orange-600 hover:bg-orange-500/20 transition-colors"
+                                  title="Revert to buyer"
+                                >
+                                  Make Buyer
+                                </button>
+                              )}
                               <button
                                 onClick={() => handleSuspendUser(user.id, user.status)}
                                 className={cn("rounded-lg px-2.5 py-1 text-xs font-semibold transition-colors",

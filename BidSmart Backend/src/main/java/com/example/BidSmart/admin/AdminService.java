@@ -95,6 +95,47 @@ public class AdminService {
     }
 
     @Transactional
+    public AdminUserResponse updateUserRole(UUID userId, UserRole newRole) {
+        if (newRole == UserRole.ADMIN) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Cannot assign admin role");
+        }
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "User not found"));
+        if (user.getRole() == UserRole.ADMIN) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "Cannot change admin role");
+        }
+        if (user.getRole() == newRole) {
+            return AdminUserResponse.from(user);
+        }
+
+        UserRole previousRole = user.getRole();
+        user.setRole(newRole);
+        User saved = userRepository.save(user);
+
+        if (previousRole == UserRole.SELLER && newRole == UserRole.BUYER) {
+            sellerProfileRepository.findByUserId(userId).ifPresent(profile -> {
+                profile.setStatus(VerificationStatus.REJECTED);
+                profile.setRejectionReason("Seller role removed by admin");
+                profile.setReviewedAt(OffsetDateTime.now());
+                sellerProfileRepository.save(profile);
+            });
+            for (Auction a : auctionRepository.findBySellerId(userId)) {
+                a.setVerificationStatus(VerificationStatus.REJECTED);
+                a.setVerificationReason("Seller role removed by admin");
+                a.setVerifiedAt(OffsetDateTime.now());
+                auctionRepository.save(a);
+            }
+            notificationService.createNotification(
+                saved,
+                NotificationType.SYSTEM,
+                "Seller access revoked",
+                "Admin has reverted your account to buyer. Your listings are no longer visible."
+            );
+        }
+        return AdminUserResponse.from(saved);
+    }
+
+    @Transactional
     public void deleteUser(UUID userId) {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "User not found"));
