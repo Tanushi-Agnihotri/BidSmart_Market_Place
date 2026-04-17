@@ -79,6 +79,7 @@ const AuctionDetail = () => {
     const amount = parseFloat(bidAmount);
     if (isNaN(amount)) { setBidError('Enter a valid amount'); return false; }
     if (amount < minBid) { setBidError(`Minimum bid is ₹${minBid.toLocaleString()}`); return false; }
+    if (amount > 999_999_999_999) { setBidError('Maximum bid is ₹999,999,999,999'); return false; }
     if (currentUser && currentUser.id === auction.sellerId) {
       setBidError('You cannot bid on your own auction');
       return false;
@@ -319,7 +320,7 @@ const AuctionDetail = () => {
                           type="number"
                           value={bidAmount}
                           onChange={e => { setBidAmount(e.target.value); setBidError(''); }}
-                          className="w-full rounded-xl border border-border bg-muted/60 pl-8 pr-4 py-3 font-mono text-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/30 transition-all"
+                          className="w-full rounded-xl border border-border bg-muted/60 pl-8 pr-4 py-3 font-mono text-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/30 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-inner-spin-button]:m-0 [&::-webkit-outer-spin-button]:m-0"
                           placeholder="Enter bid amount"
                         />
                       </div>
@@ -400,7 +401,7 @@ const AuctionDetail = () => {
 
       {/* Bid Confirmation Dialog */}
       {showConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in">
+        <div className="fixed inset-0 z-50 flex items-start justify-center pt-24 bg-black/50 backdrop-blur-sm animate-fade-in">
           <div className="relative overflow-hidden bg-card border border-border rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl space-y-4">
             {/* Top accent */}
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary/60 via-primary to-primary/60" />
