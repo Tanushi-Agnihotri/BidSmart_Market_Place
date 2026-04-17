@@ -243,18 +243,16 @@ const SellerProducts = () => {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <div className="flex flex-col gap-1">
+                            {product.verificationStatus === 'PENDING' ? (
+                              <span className="inline-flex w-fit items-center rounded-md bg-warning/10 text-warning border border-warning/30 px-2 py-0.5 text-[11px] font-semibold">Pending review</span>
+                            ) : product.verificationStatus === 'REJECTED' ? (
+                              <span
+                                className="inline-flex w-fit items-center rounded-md bg-destructive/10 text-destructive border border-destructive/30 px-2 py-0.5 text-[11px] font-semibold"
+                                title={product.verificationReason || 'Rejected by admin'}
+                              >Rejected</span>
+                            ) : (
                               <StatusBadge status={product.status} />
-                              {product.verificationStatus === 'PENDING' && (
-                                <span className="inline-flex w-fit items-center rounded-md bg-warning/10 text-warning border border-warning/30 px-2 py-0.5 text-[11px] font-semibold">Pending review</span>
-                              )}
-                              {product.verificationStatus === 'REJECTED' && (
-                                <span
-                                  className="inline-flex w-fit items-center rounded-md bg-destructive/10 text-destructive border border-destructive/30 px-2 py-0.5 text-[11px] font-semibold"
-                                  title={product.verificationReason || 'Rejected by admin'}
-                                >Rejected</span>
-                              )}
-                            </div>
+                            )}
                           </TableCell>
                           <TableCell className="text-right font-mono text-base">₹{product.basePrice.toLocaleString()}</TableCell>
                           <TableCell className="text-right font-mono text-base font-semibold text-primary">
