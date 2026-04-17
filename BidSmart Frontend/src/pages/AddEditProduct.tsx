@@ -28,7 +28,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { categories } from '@/data/mockData';
 import { toast } from 'sonner';
-import { auctionApi, imageApi, ApiError } from '@/lib/apiService';
+import { auctionApi, imageApi, verificationDocApi, ApiError } from '@/lib/apiService';
 import { cn } from '@/lib/utils';
 import SellerAccessGate from '@/components/shared/SellerAccessGate';
 
@@ -45,6 +45,15 @@ const presetDurations = [
 ];
 
 type PendingImage = { file: File; preview: string };
+type PendingDoc = { file: File; docType: string };
+
+const docTypes = [
+  { value: 'INVOICE', label: 'Invoice' },
+  { value: 'RECEIPT', label: 'Purchase Receipt' },
+  { value: 'CERTIFICATE', label: 'Authenticity Certificate' },
+  { value: 'WARRANTY', label: 'Warranty Card' },
+  { value: 'OTHER', label: 'Other' },
+];
 
 const getMinDate = () => new Date().toISOString().slice(0, 10);
 const getMaxDate = () => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
@@ -90,6 +99,8 @@ const AddEditProduct = () => {
   const [rulesAndRegulations, setRulesAndRegulations] = useState<string>(existing?.rulesAndRegulations ?? '');
   const [consentStart, setConsentStart] = useState<string>(existing?.consentStartTime ? existing.consentStartTime.slice(0, 16) : '');
   const [consentEnd, setConsentEnd] = useState<string>(existing?.consentEndTime ? existing.consentEndTime.slice(0, 16) : '');
+  const [pendingDocs, setPendingDocs] = useState<PendingDoc[]>([]);
+  const [selectedDocType, setSelectedDocType] = useState<string>('INVOICE');
 
   useEffect(() => {
     if (!existing) return;
@@ -116,6 +127,25 @@ const AddEditProduct = () => {
           ? 'Editing a product listing is a seller-only action.'
           : 'Listing a product is a seller-only action — set your base price, upload photos, and start receiving bids.'}
       />
+    );
+  }
+
+  if (isEdit && existing?.verificationStatus === 'VERIFIED') {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6">
+        <div className="max-w-md w-full rounded-2xl border border-border bg-card p-8 text-center space-y-4 shadow-card">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-success/10 text-success">
+            <CheckCircle className="h-6 w-6" />
+          </div>
+          <h2 className="font-display text-xl font-semibold">This listing is locked</h2>
+          <p className="text-sm text-muted-foreground">
+            Admin has verified this product. To protect buyers, verified listings cannot be edited. Contact support if a correction is needed.
+          </p>
+          <button onClick={() => navigate('/seller/products')} className="w-full rounded-xl gradient-gold py-2.5 text-sm font-bold text-primary-foreground shadow-elegant hover:scale-[1.01] transition-all">
+            Back to My Products
+          </button>
+        </div>
+      </div>
     );
   }
 
@@ -187,7 +217,23 @@ const AddEditProduct = () => {
         if (uploaded > 0) toast.success(`${uploaded} image${uploaded > 1 ? 's' : ''} uploaded!`);
         if (failed > 0) toast.error(`${failed} image${failed > 1 ? 's' : ''} failed to upload.`);
       }
+      let lastVerification: { status: string; reason: string | null } | null = null;
+      if (auctionId && pendingDocs.length > 0) {
+        for (const pd of pendingDocs) {
+          try {
+            const resp = await verificationDocApi.upload(auctionId, pd.file, pd.docType);
+            lastVerification = { status: resp.verificationStatus, reason: resp.verificationReason };
+          } catch (e) {
+            toast.error(`Document "${pd.file.name}" failed: ${e instanceof ApiError ? e.message : 'upload error'}`);
+          }
+        }
+      }
       toast.success(isEdit ? 'Product updated!' : startMode === 'scheduled' ? 'Auction scheduled!' : 'Product listed!');
+      if (lastVerification) {
+        if (lastVerification.status === 'VERIFIED') toast.success(`Auto-verified: ${lastVerification.reason ?? 'passed all checks'}`);
+        else if (lastVerification.status === 'REJECTED') toast.error(`Auto-rejected: ${lastVerification.reason ?? 'failed validation'}`);
+        else toast.info(`Under review: ${lastVerification.reason ?? 'admin verification pending'}`);
+      }
       await refreshAuctions();
       navigate('/seller/products');
     } catch (err) {
@@ -459,6 +505,74 @@ const AddEditProduct = () => {
                   )}
                 </div>
               </div>
+
+              {/* ── Verification Documents ── */}
+              {!isEdit && (
+                <div className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-sm animate-float-up delay-250">
+                  <div className="p-5 sm:p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20">
+                        <CheckCircle className="h-4.5 w-4.5 text-primary" />
+                      </div>
+                      <div>
+                        <h2 className="font-semibold text-base">Verification Documents</h2>
+                        <p className="text-xs text-muted-foreground">Upload invoice / certificate — system auto-verifies genuine listings</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-2.5 items-stretch">
+                      <Select value={selectedDocType} onValueChange={setSelectedDocType}>
+                        <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {docTypes.map(t => (
+                            <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <label className="cursor-pointer flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border hover:border-primary/50 hover:bg-primary/5 px-4 py-2.5 text-sm font-medium text-muted-foreground hover:text-primary transition-all">
+                        <ImagePlus className="h-4 w-4" />
+                        Add document
+                        <input
+                          type="file"
+                          accept="application/pdf,image/jpeg,image/png,image/webp"
+                          className="hidden"
+                          onChange={e => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            if (file.size > 10 * 1024 * 1024) { toast.error(`${file.name} exceeds 10MB.`); return; }
+                            if (pendingDocs.length >= 5) { toast.error('Maximum 5 documents.'); return; }
+                            setPendingDocs(prev => [...prev, { file, docType: selectedDocType }]);
+                            e.target.value = '';
+                          }}
+                        />
+                      </label>
+                    </div>
+
+                    {pendingDocs.length > 0 && (
+                      <ul className="mt-3 space-y-1.5">
+                        {pendingDocs.map((d, i) => (
+                          <li key={i} className="flex items-center justify-between gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2 text-xs">
+                            <div className="min-w-0 flex-1 flex items-center gap-2">
+                              <span className="shrink-0 rounded-md bg-primary/10 text-primary px-1.5 py-0.5 text-[10px] font-semibold">
+                                {docTypes.find(t => t.value === d.docType)?.label ?? d.docType}
+                              </span>
+                              <span className="truncate">{d.file.name}</span>
+                              <span className="shrink-0 text-muted-foreground">{(d.file.size / 1024).toFixed(0)} KB</span>
+                            </div>
+                            <button type="button" onClick={() => setPendingDocs(prev => prev.filter((_, idx) => idx !== i))} className="text-muted-foreground hover:text-destructive">
+                              <X className="h-3.5 w-3.5" />
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+
+                    <p className="mt-3 text-[11px] text-muted-foreground">
+                      PDF, JPG, PNG, or WebP · Max 10MB each · Up to 5 documents
+                    </p>
+                  </div>
+                </div>
+              )}
 
               {/* ── Pricing ── */}
               <div className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-sm animate-float-up delay-300">

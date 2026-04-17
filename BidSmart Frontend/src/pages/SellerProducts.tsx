@@ -307,11 +307,17 @@ const SellerProducts = () => {
                                     <Eye className="h-4 w-4" /> View
                                   </Link>
                                 </DropdownMenuItem>
-                                <DropdownMenuItem asChild>
-                                  <Link to={`/seller/products/${product.id}/edit`} className="gap-2">
-                                    <Edit className="h-4 w-4" /> Edit
-                                  </Link>
-                                </DropdownMenuItem>
+                                {product.verificationStatus === 'VERIFIED' ? (
+                                  <DropdownMenuItem disabled className="gap-2 opacity-60">
+                                    <Edit className="h-4 w-4" /> Edit (locked — verified)
+                                  </DropdownMenuItem>
+                                ) : (
+                                  <DropdownMenuItem asChild>
+                                    <Link to={`/seller/products/${product.id}/edit`} className="gap-2">
+                                      <Edit className="h-4 w-4" /> Edit
+                                    </Link>
+                                  </DropdownMenuItem>
+                                )}
                                 <DropdownMenuItem className="gap-2 text-destructive focus:text-destructive" onClick={() => setDeleteId(product.id)}>
                                   <Trash2 className="h-4 w-4" /> Delete
                                 </DropdownMenuItem>

@@ -19,6 +19,7 @@ import com.example.BidSmart.user.User;
 import com.example.BidSmart.user.UserRole;
 import com.example.BidSmart.user.VerificationStatus;
 
+import com.example.BidSmart.verification.AuctionVerificationDocumentRepository;
 import com.example.BidSmart.watchlist.WatchlistRepository;
 
 @Service
@@ -28,12 +29,14 @@ public class AuctionService {
     private final AuctionImageRepository imageRepository;
     private final WatchlistRepository watchlistRepository;
     private final SellerProfileRepository sellerProfileRepository;
+    private final AuctionVerificationDocumentRepository verificationDocRepository;
 
-    public AuctionService(AuctionRepository auctionRepository, AuctionImageRepository imageRepository, WatchlistRepository watchlistRepository, SellerProfileRepository sellerProfileRepository) {
+    public AuctionService(AuctionRepository auctionRepository, AuctionImageRepository imageRepository, WatchlistRepository watchlistRepository, SellerProfileRepository sellerProfileRepository, AuctionVerificationDocumentRepository verificationDocRepository) {
         this.auctionRepository = auctionRepository;
         this.imageRepository = imageRepository;
         this.watchlistRepository = watchlistRepository;
         this.sellerProfileRepository = sellerProfileRepository;
+        this.verificationDocRepository = verificationDocRepository;
     }
 
     @Transactional(readOnly = true)
@@ -139,6 +142,10 @@ public class AuctionService {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Cannot edit a closed auction");
         }
 
+        if (auction.getVerificationStatus() == VerificationStatus.VERIFIED) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Cannot edit a verified auction — admin has already approved it");
+        }
+
         if (auction.getTotalBids() > 0) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Cannot edit an auction that already has bids");
         }
@@ -172,6 +179,7 @@ public class AuctionService {
 
         watchlistRepository.deleteByAuctionId(auctionId);
         imageRepository.deleteByAuctionId(auctionId);
+        verificationDocRepository.deleteByAuctionId(auctionId);
         auctionRepository.delete(auction);
     }
 

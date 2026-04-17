@@ -32,6 +32,18 @@ public class CloudinaryService {
         return (String) result.get("secure_url");
     }
 
+    /** Upload a verification document (PDF or image) with auto resource detection. */
+    public String uploadDocument(MultipartFile file) throws IOException {
+        Map<?, ?> result = cloudinary.uploader().upload(
+            file.getBytes(),
+            ObjectUtils.asMap(
+                "folder", "bidsmart/verification",
+                "resource_type", "auto"
+            )
+        );
+        return (String) result.get("secure_url");
+    }
+
     /** Delete an image by its Cloudinary public_id. */
     public void delete(String publicId) {
         try {

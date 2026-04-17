@@ -25,6 +25,8 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.example.BidSmart.user.User;
+import com.example.BidSmart.user.VerificationStatus;
+import com.example.BidSmart.verification.AutoVerificationService;
 
 @RestController
 @RequestMapping("/api")
@@ -33,13 +35,16 @@ public class ImageController {
     private final AuctionRepository auctionRepository;
     private final AuctionImageRepository imageRepository;
     private final ImageStorageService storageService;
+    private final AutoVerificationService autoVerificationService;
 
     public ImageController(AuctionRepository auctionRepository,
                            AuctionImageRepository imageRepository,
-                           ImageStorageService storageService) {
+                           ImageStorageService storageService,
+                           AutoVerificationService autoVerificationService) {
         this.auctionRepository = auctionRepository;
         this.imageRepository = imageRepository;
         this.storageService = storageService;
+        this.autoVerificationService = autoVerificationService;
     }
 
     // Upload image for an auction
@@ -74,6 +79,10 @@ public class ImageController {
         image.setSortOrder(currentCount);
 
         imageRepository.save(image);
+
+        if (auction.getVerificationStatus() == VerificationStatus.PENDING) {
+            autoVerificationService.evaluate(auction);
+        }
 
         return ResponseEntity.status(HttpStatus.CREATED).body(ImageResponse.from(image));
     }

@@ -373,6 +373,48 @@ export const imageApi = {
     request<void>(`/api/auctions/${auctionId}/images/${imageId}`, { method: 'DELETE' }),
 };
 
+// Verification documents
+export interface ApiVerificationDocument {
+  id: string;
+  docType: string;
+  fileName: string;
+  url: string;
+  fileSize: number;
+  contentType: string;
+  uploadedAt: string;
+}
+
+export interface ApiVerificationUploadResponse {
+  id: string;
+  docType: string;
+  fileName: string;
+  url: string;
+  fileSize: number;
+  verificationStatus: 'PENDING' | 'VERIFIED' | 'REJECTED';
+  verificationReason: string | null;
+}
+
+export const verificationDocApi = {
+  upload: async (auctionId: string, file: File, docType: string): Promise<ApiVerificationUploadResponse> => {
+    const token = getToken();
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('docType', docType);
+    const res = await fetch(apiUrl(`/api/auctions/${auctionId}/verification-documents`), {
+      method: 'POST',
+      headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+      body: formData,
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new ApiError(res.status, body.message || 'Document upload failed');
+    }
+    return res.json();
+  },
+  list: (auctionId: string) =>
+    request<ApiVerificationDocument[]>(`/api/auctions/${auctionId}/verification-documents`),
+};
+
 // Users
 export interface ApiNotifPrefs {
   emailBids: boolean;
