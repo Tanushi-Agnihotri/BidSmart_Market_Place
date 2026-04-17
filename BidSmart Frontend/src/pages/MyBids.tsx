@@ -51,7 +51,8 @@ const MyBids = () => {
     if (!auction) return 'lost';
     const auctionBids = bids.filter(b => b.auctionId === auctionId).sort((a, b) => b.amount - a.amount);
     const isTopBidder = auctionBids[0]?.bidderId === currentUser?.id;
-    if (auction.status === 'closed') return isTopBidder ? 'won' : 'lost';
+    const hasEnded = auction.status === 'closed' || new Date(auction.endTime).getTime() <= Date.now();
+    if (hasEnded) return isTopBidder ? 'won' : 'lost';
     return isTopBidder ? 'winning' : 'outbid';
   };
 
