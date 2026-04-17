@@ -26,7 +26,7 @@ const About = () => {
   <div className="min-h-screen animate-fade-in">
 
     {/* ═══════════ HERO ═══════════ */}
-    <section className="relative flex items-center overflow-hidden">
+    <section className="relative flex items-center overflow-hidden min-h-screen">
       <div className="absolute inset-0">
         <img src={heroImg} alt="" className="w-full h-full object-cover animate-hero-zoom" />
         <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/70 to-black/30" />
@@ -48,27 +48,19 @@ const About = () => {
           />
         ))}
       </div>
-      <div className="container relative mx-auto px-4 pt-20 pb-8">
+      <div className="container relative mx-auto px-4 py-32">
         <div className="max-w-2xl">
-          <div className="inline-flex items-center gap-2.5 rounded-full border border-primary/30 bg-primary/10 backdrop-blur-md px-4 py-1.5 mb-4 animate-float-up animate-border-glow">
+          <div className="inline-flex items-center gap-2.5 rounded-full border border-primary/30 bg-primary/10 backdrop-blur-md px-4 py-1.5 mb-6 animate-float-up animate-border-glow">
             <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
             <span className="text-xs font-bold uppercase tracking-[0.2em] text-primary">About BidSmart</span>
           </div>
-          <h1 className="font-display text-4xl sm:text-5xl md:text-6xl font-bold leading-[1.05] text-white mb-4 tracking-tight animate-float-up delay-100" style={{ animationFillMode: 'both' }}>
+          <h1 className="font-display text-5xl sm:text-6xl md:text-7xl font-bold leading-[1.05] text-white mb-6 tracking-tight animate-float-up delay-100" style={{ animationFillMode: 'both' }}>
             Transparent. Fair.<br />
             <span className="gradient-text-animated">Intelligent.</span>
           </h1>
-          <p className="text-base md:text-lg text-white/65 mb-6 max-w-lg leading-relaxed animate-float-up delay-300" style={{ animationFillMode: 'both' }}>
+          <p className="text-base md:text-lg text-white/65 max-w-lg leading-relaxed animate-float-up delay-300" style={{ animationFillMode: 'both' }}>
             BidSmart reimagines the auction experience with cutting-edge technology, verified sellers, and a commitment to fairness.
           </p>
-          <div className="flex flex-wrap gap-3 animate-float-up delay-500" style={{ animationFillMode: 'both' }}>
-            <Link to="/auctions" className="group inline-flex items-center gap-2 rounded-xl gradient-gold px-6 py-3 text-base font-bold text-primary-foreground shadow-elegant transition-all hover:scale-[1.02] hover:shadow-lg">
-              Explore Auctions <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
-            </Link>
-            <Link to="/register" className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/5 backdrop-blur-md px-6 py-3 text-base font-medium text-white transition-all hover:bg-white/10 hover:border-white/30">
-              Create Account
-            </Link>
-          </div>
         </div>
       </div>
       <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background to-transparent" />
