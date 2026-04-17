@@ -1,12 +1,16 @@
 import { MdOutlineGavel, MdOutlineSecurity, MdOutlineCheckCircle, MdOutlineVerified, MdOutlineArrowForward, MdOutlineEmail, MdOutlineLocationOn } from 'react-icons/md';
 import { Link, useLocation } from 'react-router-dom';
+import { useApp } from '@/context/AppContext';
 
 const AUTH_ROUTES = ['/login', '/register', '/forgot-password', '/reset-password'];
 
 const Footer = () => {
   const location = useLocation();
-  if (AUTH_ROUTES.includes(location.pathname)) return null;
+  const { currentRole } = useApp();
+  const isLoggedIn = currentRole !== 'guest';
   const isHome = location.pathname === '/';
+
+  if (AUTH_ROUTES.includes(location.pathname)) return null;
 
   return (
   <footer className="relative border-t border-border overflow-hidden">
@@ -16,7 +20,7 @@ const Footer = () => {
     <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-primary/[0.03] rounded-full blur-3xl" />
 
     <div className={`container mx-auto px-4 ${isHome ? 'py-1.5' : 'py-1.5'} relative z-10`}>
-      {isHome && (
+      {(isHome || !isLoggedIn) && (
       <>
         {/* Main footer grid */}
         <div className="grid grid-cols-2 md:grid-cols-12 gap-8 md:gap-6">
