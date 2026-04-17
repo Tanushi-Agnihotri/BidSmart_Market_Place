@@ -65,7 +65,7 @@ const Landing = () => {
         </div>
 
         <div className="container relative mx-auto px-4 py-28">
-          <div className="max-w-2xl">
+          <div className="max-w-2xl mx-auto text-center flex flex-col items-center">
             <div className="inline-flex items-center gap-2.5 rounded-full border border-primary/30 bg-primary/10 backdrop-blur-md px-5 py-2 mb-8 animate-float-up animate-border-glow">
               <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
               <span className="text-xs font-bold uppercase tracking-[0.2em] text-primary">Premium Auction Platform</span>
@@ -77,7 +77,7 @@ const Landing = () => {
             <p className="text-lg md:text-xl text-white/65 mb-10 max-w-lg leading-relaxed animate-float-up delay-300" style={{ animationFillMode: 'both' }}>
               Discover extraordinary items from verified sellers worldwide. Transparent bidding, real-time auctions, and a curated marketplace.
             </p>
-            <div className="flex flex-wrap gap-3 animate-float-up delay-500" style={{ animationFillMode: 'both' }}>
+            <div className="flex flex-wrap justify-center gap-3 animate-float-up delay-500" style={{ animationFillMode: 'both' }}>
               <Link to="/auctions" className="group inline-flex items-center gap-2 rounded-xl gradient-gold px-8 py-4 text-lg font-bold text-primary-foreground shadow-elegant transition-all hover:scale-[1.02] hover:shadow-lg">
                 Explore Auctions <MdOutlineArrowForward className="h-5 w-5 transition-transform group-hover:translate-x-1" />
               </Link>
