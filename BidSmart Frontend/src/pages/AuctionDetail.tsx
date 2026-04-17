@@ -30,7 +30,7 @@ const AuctionDetail = () => {
       const min = auction.currentBid > 0 ? auction.currentBid + auction.bidIncrement : auction.basePrice;
       setBidAmount(String(min));
     }
-  }, [auction]);
+  }, [auction?.id]);
 
   // Fetch bids from API for this auction
   useEffect(() => {
@@ -315,7 +315,7 @@ const AuctionDetail = () => {
                         Min. next bid: <span className="font-mono font-semibold text-foreground">₹{minBid.toLocaleString()}</span>
                       </p>
                       <div className="relative">
-                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground font-mono text-sm">₹</span>
+                        <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground font-mono text-sm">₹</span>
                         <input
                           type="number"
                           value={bidAmount}
