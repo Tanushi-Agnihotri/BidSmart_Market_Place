@@ -9,6 +9,7 @@ import com.example.BidSmart.auction.Auction;
 import com.example.BidSmart.auction.AuctionCondition;
 import com.example.BidSmart.auction.AuctionImage;
 import com.example.BidSmart.auction.AuctionStatus;
+import com.example.BidSmart.user.VerificationStatus;
 
 public record AuctionResponse(
     UUID id,
@@ -24,6 +25,8 @@ public record AuctionResponse(
     OffsetDateTime startTime,
     OffsetDateTime endTime,
     AuctionStatus status,
+    VerificationStatus verificationStatus,
+    String verificationReason,
     UUID sellerId,
     String sellerName,
     OffsetDateTime createdAt,
@@ -56,6 +59,8 @@ public record AuctionResponse(
             auction.getStartTime(),
             auction.getEndTime(),
             auction.getStatus(),
+            auction.getVerificationStatus(),
+            auction.getVerificationReason(),
             auction.getSeller().getId(),
             auction.getSeller().getFullName(),
             auction.getCreatedAt(),

@@ -5,6 +5,7 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 import com.example.BidSmart.user.User;
+import com.example.BidSmart.user.VerificationStatus;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -65,6 +66,19 @@ public class Auction {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private AuctionStatus status;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "verification_status", nullable = false, length = 20)
+    private VerificationStatus verificationStatus = VerificationStatus.PENDING;
+
+    @Column(name = "verification_reason", columnDefinition = "TEXT")
+    private String verificationReason;
+
+    @Column(name = "verified_at")
+    private OffsetDateTime verifiedAt;
+
+    @Column(name = "verified_by")
+    private UUID verifiedBy;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "seller_id", nullable = false)
@@ -200,6 +214,38 @@ public class Auction {
 
     public void setSeller(User seller) {
         this.seller = seller;
+    }
+
+    public VerificationStatus getVerificationStatus() {
+        return verificationStatus;
+    }
+
+    public void setVerificationStatus(VerificationStatus verificationStatus) {
+        this.verificationStatus = verificationStatus;
+    }
+
+    public String getVerificationReason() {
+        return verificationReason;
+    }
+
+    public void setVerificationReason(String verificationReason) {
+        this.verificationReason = verificationReason;
+    }
+
+    public OffsetDateTime getVerifiedAt() {
+        return verifiedAt;
+    }
+
+    public void setVerifiedAt(OffsetDateTime verifiedAt) {
+        this.verifiedAt = verifiedAt;
+    }
+
+    public UUID getVerifiedBy() {
+        return verifiedBy;
+    }
+
+    public void setVerifiedBy(UUID verifiedBy) {
+        this.verifiedBy = verifiedBy;
     }
 
     public OffsetDateTime getCreatedAt() {

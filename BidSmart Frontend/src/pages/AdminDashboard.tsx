@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { MdOutlinePeople as Users, MdOutlineGavel as Gavel, MdOutlineCurrencyRupee as RupeeSign, MdOutlineTrendingUp as TrendingUp, MdOutlineShield as Shield, MdOutlineBlock as Ban, MdOutlineCheckCircle as CheckCircle2, MdOutlineSearch as Search, MdOutlineMoreHoriz as MoreHorizontal, MdOutlineDelete as Trash } from 'react-icons/md';
+import { MdOutlinePeople as Users, MdOutlineGavel as Gavel, MdOutlineCurrencyRupee as RupeeSign, MdOutlineTrendingUp as TrendingUp, MdOutlineShield as Shield, MdOutlineBlock as Ban, MdOutlineCheckCircle as CheckCircle2, MdOutlineSearch as Search, MdOutlineMoreHoriz as MoreHorizontal, MdOutlineDelete as Trash, MdOutlineVerifiedUser as VerifiedIcon, MdOutlineStore as Store, MdOutlineClose as XIcon } from 'react-icons/md';
 import { Link } from 'react-router-dom';
 import { AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useApp } from '@/context/AppContext';
@@ -11,7 +11,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { mockUsers, type User } from '@/data/mockData';
 import { cn } from '@/lib/utils';
-import { adminApi, type ApiAdminUser, type ApiDashboardStats } from '@/lib/apiService';
+import { adminApi, type ApiAdminUser, type ApiDashboardStats, type ApiAdminSeller, type ApiAuction } from '@/lib/apiService';
 import { toast } from '@/hooks/use-toast';
 
 const COLORS = ['hsl(42,50%,54%)', 'hsl(200,60%,50%)', 'hsl(150,50%,45%)', 'hsl(280,50%,55%)', 'hsl(0,0%,45%)'];
@@ -35,6 +35,24 @@ const AdminDashboard = () => {
     categoryData: { name: string; value: number }[];
   }>({ monthlyRevenue: [], dailyBids: [], categoryData: [] });
 
+  // Verification queues
+  const [pendingSellers, setPendingSellers] = useState<ApiAdminSeller[]>([]);
+  const [pendingAuctions, setPendingAuctions] = useState<ApiAuction[]>([]);
+  const [verifying, setVerifying] = useState(false);
+  const [rejectionTarget, setRejectionTarget] = useState<
+    | { kind: 'seller'; id: string; name: string }
+    | { kind: 'auction'; id: string; name: string }
+    | null
+  >(null);
+  const [rejectionReason, setRejectionReason] = useState('');
+
+  const loadPendingSellers = () => {
+    adminApi.getSellers('PENDING').then(setPendingSellers).catch(() => {});
+  };
+  const loadPendingAuctions = () => {
+    adminApi.getAuctionsByVerification('PENDING').then(setPendingAuctions).catch(() => {});
+  };
+
   useEffect(() => {
     if (!authToken) return;
     refreshAuctions();
@@ -52,7 +70,58 @@ const AdminDashboard = () => {
         stats: {},
       })));
     }).catch(() => {});
+    loadPendingSellers();
+    loadPendingAuctions();
   }, [authToken, refreshAuctions]);
+
+  const handleApproveSeller = async (id: string) => {
+    setVerifying(true);
+    try {
+      await adminApi.verifySeller(id, 'VERIFIED');
+      setPendingSellers(prev => prev.filter(s => s.id !== id));
+      toast({ title: 'Seller verified' });
+    } catch {
+      toast({ title: 'Verification failed', variant: 'destructive' });
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  const handleApproveAuction = async (id: string) => {
+    setVerifying(true);
+    try {
+      await adminApi.verifyAuction(id, 'VERIFIED');
+      setPendingAuctions(prev => prev.filter(a => a.id !== id));
+      await refreshAuctions();
+      toast({ title: 'Auction verified' });
+    } catch {
+      toast({ title: 'Verification failed', variant: 'destructive' });
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  const handleReject = async () => {
+    if (!rejectionTarget) return;
+    setVerifying(true);
+    try {
+      if (rejectionTarget.kind === 'seller') {
+        await adminApi.verifySeller(rejectionTarget.id, 'REJECTED', rejectionReason || undefined);
+        setPendingSellers(prev => prev.filter(s => s.id !== rejectionTarget.id));
+        toast({ title: 'Seller rejected' });
+      } else {
+        await adminApi.verifyAuction(rejectionTarget.id, 'REJECTED', rejectionReason || undefined);
+        setPendingAuctions(prev => prev.filter(a => a.id !== rejectionTarget.id));
+        toast({ title: 'Auction rejected' });
+      }
+    } catch {
+      toast({ title: 'Rejection failed', variant: 'destructive' });
+    } finally {
+      setVerifying(false);
+      setRejectionTarget(null);
+      setRejectionReason('');
+    }
+  };
 
   const [confirmDelete, setConfirmDelete] = useState<{ type: 'user' | 'auction'; id: string; name: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -289,6 +358,18 @@ const AdminDashboard = () => {
             <TabsTrigger value="auctions" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <Gavel className="h-3.5 w-3.5 mr-1.5" /> Auction Monitoring
             </TabsTrigger>
+            <TabsTrigger value="verify-sellers" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <Store className="h-3.5 w-3.5 mr-1.5" /> Pending Sellers
+              {pendingSellers.length > 0 && (
+                <span className="ml-1.5 rounded-full bg-primary/20 px-1.5 py-0.5 text-[10px] font-bold">{pendingSellers.length}</span>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="verify-auctions" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <VerifiedIcon className="h-3.5 w-3.5 mr-1.5" /> Pending Auctions
+              {pendingAuctions.length > 0 && (
+                <span className="ml-1.5 rounded-full bg-primary/20 px-1.5 py-0.5 text-[10px] font-bold">{pendingAuctions.length}</span>
+              )}
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="users">
@@ -443,7 +524,163 @@ const AdminDashboard = () => {
               </div>
             </div>
           </TabsContent>
+
+          <TabsContent value="verify-sellers">
+            <div className="rounded-2xl border border-border bg-card overflow-hidden">
+              {pendingSellers.length === 0 ? (
+                <div className="p-10 text-center text-muted-foreground">
+                  <VerifiedIcon className="mx-auto mb-2 h-8 w-8 opacity-60" />
+                  No pending seller applications
+                </div>
+              ) : (
+                <div className="divide-y divide-border">
+                  {pendingSellers.map(s => (
+                    <div key={s.id} className="p-5 flex flex-col lg:flex-row gap-4 lg:items-center">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="h-10 w-10 rounded-full bg-primary/10 border border-primary/20 text-primary font-bold flex items-center justify-center text-sm shrink-0">
+                            {s.userFullName.charAt(0).toUpperCase()}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-semibold truncate">{s.storeName}</p>
+                            <p className="text-sm text-muted-foreground truncate">{s.userFullName} · {s.userEmail}</p>
+                          </div>
+                        </div>
+                        <div className="grid sm:grid-cols-2 gap-x-6 gap-y-1 text-sm ml-13">
+                          <div><span className="text-muted-foreground">Category:</span> {s.businessCategory}</div>
+                          <div><span className="text-muted-foreground">Legal name:</span> {s.legalName}</div>
+                          <div className="sm:col-span-2">
+                            <a
+                              href={s.idDocumentUrl.startsWith('http') ? s.idDocumentUrl : s.idDocumentUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-primary hover:underline"
+                            >
+                              View ID document →
+                            </a>
+                          </div>
+                          {s.description && (
+                            <div className="sm:col-span-2 text-muted-foreground text-xs mt-1 line-clamp-2">{s.description}</div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex gap-2 shrink-0">
+                        <button
+                          onClick={() => handleApproveSeller(s.id)}
+                          disabled={verifying}
+                          className="rounded-xl bg-green-500/15 text-green-600 hover:bg-green-500/25 px-3 py-2 text-sm font-semibold flex items-center gap-1.5 disabled:opacity-50"
+                        >
+                          <CheckCircle2 className="h-4 w-4" /> Approve
+                        </button>
+                        <button
+                          onClick={() => setRejectionTarget({ kind: 'seller', id: s.id, name: s.storeName })}
+                          disabled={verifying}
+                          className="rounded-xl bg-destructive/10 text-destructive hover:bg-destructive/20 px-3 py-2 text-sm font-semibold flex items-center gap-1.5 disabled:opacity-50"
+                        >
+                          <XIcon className="h-4 w-4" /> Reject
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="verify-auctions">
+            <div className="rounded-2xl border border-border bg-card overflow-hidden">
+              {pendingAuctions.length === 0 ? (
+                <div className="p-10 text-center text-muted-foreground">
+                  <VerifiedIcon className="mx-auto mb-2 h-8 w-8 opacity-60" />
+                  No auctions awaiting verification
+                </div>
+              ) : (
+                <div className="divide-y divide-border">
+                  {pendingAuctions.map(a => (
+                    <div key={a.id} className="p-5 flex flex-col lg:flex-row gap-4 lg:items-center">
+                      <div className="flex-1 min-w-0 flex gap-3">
+                        {a.images?.[0] && (
+                          <img
+                            src={a.images[0].startsWith('/') ? `${a.images[0]}` : a.images[0]}
+                            alt={a.title}
+                            className="h-16 w-16 rounded-lg object-cover shrink-0"
+                          />
+                        )}
+                        <div className="min-w-0">
+                          <p className="font-semibold truncate">{a.title}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {a.category} · {a.sellerName}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            Base ₹{a.basePrice.toLocaleString()} · {a.condition}
+                          </p>
+                          {a.description && (
+                            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{a.description}</p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex gap-2 shrink-0">
+                        <button
+                          onClick={() => handleApproveAuction(a.id)}
+                          disabled={verifying}
+                          className="rounded-xl bg-green-500/15 text-green-600 hover:bg-green-500/25 px-3 py-2 text-sm font-semibold flex items-center gap-1.5 disabled:opacity-50"
+                        >
+                          <CheckCircle2 className="h-4 w-4" /> Approve
+                        </button>
+                        <button
+                          onClick={() => setRejectionTarget({ kind: 'auction', id: a.id, name: a.title })}
+                          disabled={verifying}
+                          className="rounded-xl bg-destructive/10 text-destructive hover:bg-destructive/20 px-3 py-2 text-sm font-semibold flex items-center gap-1.5 disabled:opacity-50"
+                        >
+                          <XIcon className="h-4 w-4" /> Reject
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </TabsContent>
         </Tabs>
+
+        {/* Rejection Dialog */}
+        {rejectionTarget && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+            <div className="bg-card border border-border rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10">
+                  <XIcon className="h-5 w-5 text-destructive" />
+                </div>
+                <h3 className="font-display text-lg font-semibold">Reject {rejectionTarget.kind}</h3>
+              </div>
+              <p className="text-muted-foreground text-sm mb-3">
+                Rejecting <span className="font-semibold text-foreground">"{rejectionTarget.name}"</span>. An optional reason helps the {rejectionTarget.kind === 'seller' ? 'seller' : 'seller'} understand next steps.
+              </p>
+              <textarea
+                value={rejectionReason}
+                onChange={e => setRejectionReason(e.target.value)}
+                placeholder="Reason (optional)"
+                rows={3}
+                className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm resize-none mb-4 focus:outline-none focus:ring-2 focus:ring-primary/50"
+              />
+              <div className="flex gap-3">
+                <button
+                  onClick={() => { setRejectionTarget(null); setRejectionReason(''); }}
+                  className="flex-1 rounded-xl border border-border py-2 text-sm font-medium hover:bg-muted transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleReject}
+                  disabled={verifying}
+                  className="flex-1 rounded-xl bg-destructive py-2 text-sm font-semibold text-white hover:bg-destructive/90 transition-colors disabled:opacity-50"
+                >
+                  {verifying ? 'Rejecting...' : 'Reject'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Confirm Delete Dialog */}
         {confirmDelete && (

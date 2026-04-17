@@ -4,18 +4,25 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.BidSmart.admin.dto.AdminSellerResponse;
 import com.example.BidSmart.admin.dto.AdminUserResponse;
 import com.example.BidSmart.admin.dto.ChartDataResponse;
 import com.example.BidSmart.admin.dto.DashboardStatsResponse;
 import com.example.BidSmart.admin.dto.UpdateUserStatusRequest;
+import com.example.BidSmart.admin.dto.VerifyRequest;
+import com.example.BidSmart.auction.dto.AuctionResponse;
+import com.example.BidSmart.user.User;
+import com.example.BidSmart.user.VerificationStatus;
 
 import jakarta.validation.Valid;
 
@@ -61,5 +68,35 @@ public class AdminController {
     public ResponseEntity<Void> deleteAuction(@PathVariable UUID id) {
         adminService.deleteAuction(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/sellers")
+    public ResponseEntity<List<AdminSellerResponse>> getSellers(
+            @RequestParam(required = false) VerificationStatus status) {
+        return ResponseEntity.ok(adminService.getSellers(status));
+    }
+
+    @PatchMapping("/sellers/{id}/verify")
+    public ResponseEntity<AdminSellerResponse> verifySeller(
+            @PathVariable UUID id,
+            @Valid @RequestBody VerifyRequest request,
+            Authentication authentication) {
+        User admin = (User) authentication.getPrincipal();
+        return ResponseEntity.ok(adminService.verifySeller(id, request.decision(), request.reason(), admin));
+    }
+
+    @GetMapping("/auctions")
+    public ResponseEntity<List<AuctionResponse>> getAuctions(
+            @RequestParam(required = false) VerificationStatus verificationStatus) {
+        return ResponseEntity.ok(adminService.getAuctionsByVerification(verificationStatus));
+    }
+
+    @PatchMapping("/auctions/{id}/verify")
+    public ResponseEntity<AuctionResponse> verifyAuction(
+            @PathVariable UUID id,
+            @Valid @RequestBody VerifyRequest request,
+            Authentication authentication) {
+        User admin = (User) authentication.getPrincipal();
+        return ResponseEntity.ok(adminService.verifyAuction(id, request.decision(), request.reason(), admin));
     }
 }

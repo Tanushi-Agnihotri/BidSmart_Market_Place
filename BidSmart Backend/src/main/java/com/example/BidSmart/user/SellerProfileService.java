@@ -41,9 +41,7 @@ public class SellerProfileService {
         profile.setRoutingNumber(request.routingNumber());
         profile.setAccountNumber(request.accountNumber());
         profile.setIdDocumentUrl(idUrl);
-
-        // Auto approve
-        profile.setStatus("APPROVED");
+        profile.setStatus(VerificationStatus.PENDING);
 
         user.setRole(UserRole.SELLER);
         userRepository.save(user);

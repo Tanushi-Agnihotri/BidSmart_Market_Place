@@ -7,19 +7,27 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.BidSmart.admin.dto.AdminSellerResponse;
 import com.example.BidSmart.admin.dto.AdminUserResponse;
 import com.example.BidSmart.admin.dto.ChartDataResponse;
 import com.example.BidSmart.admin.dto.DashboardStatsResponse;
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
+import com.example.BidSmart.auction.Auction;
+import com.example.BidSmart.auction.AuctionImage;
 import com.example.BidSmart.auction.AuctionImageRepository;
 import com.example.BidSmart.auction.AuctionRepository;
 import com.example.BidSmart.auction.AuctionStatus;
+import com.example.BidSmart.auction.dto.AuctionResponse;
 import com.example.BidSmart.bid.BidRepository;
 import com.example.BidSmart.exception.ApiException;
+import com.example.BidSmart.user.SellerProfile;
+import com.example.BidSmart.user.SellerProfileRepository;
 import com.example.BidSmart.user.User;
 import com.example.BidSmart.user.UserRepository;
 import com.example.BidSmart.user.UserRole;
 import com.example.BidSmart.user.UserStatus;
+import com.example.BidSmart.user.VerificationStatus;
 import com.example.BidSmart.watchlist.WatchlistRepository;
 
 @Service
@@ -30,13 +38,15 @@ public class AdminService {
     private final BidRepository bidRepository;
     private final AuctionImageRepository auctionImageRepository;
     private final WatchlistRepository watchlistRepository;
+    private final SellerProfileRepository sellerProfileRepository;
 
-    public AdminService(UserRepository userRepository, AuctionRepository auctionRepository, BidRepository bidRepository, AuctionImageRepository auctionImageRepository, WatchlistRepository watchlistRepository) {
+    public AdminService(UserRepository userRepository, AuctionRepository auctionRepository, BidRepository bidRepository, AuctionImageRepository auctionImageRepository, WatchlistRepository watchlistRepository, SellerProfileRepository sellerProfileRepository) {
         this.userRepository = userRepository;
         this.auctionRepository = auctionRepository;
         this.bidRepository = bidRepository;
         this.auctionImageRepository = auctionImageRepository;
         this.watchlistRepository = watchlistRepository;
+        this.sellerProfileRepository = sellerProfileRepository;
     }
 
     @Transactional(readOnly = true)
@@ -148,5 +158,56 @@ public class AdminService {
         watchlistRepository.deleteByAuctionId(auctionId);
         auctionImageRepository.deleteByAuctionId(auctionId);
         auctionRepository.delete(auction);
+    }
+
+    @Transactional(readOnly = true)
+    public List<AdminSellerResponse> getSellers(VerificationStatus filter) {
+        List<SellerProfile> profiles = filter != null
+            ? sellerProfileRepository.findByStatusOrderByCreatedAtAsc(filter)
+            : sellerProfileRepository.findAll();
+        return profiles.stream().map(AdminSellerResponse::from).toList();
+    }
+
+    @Transactional
+    public AdminSellerResponse verifySeller(UUID sellerProfileId, VerificationStatus decision, String reason, User admin) {
+        if (decision != VerificationStatus.VERIFIED && decision != VerificationStatus.REJECTED) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Decision must be VERIFIED or REJECTED");
+        }
+        SellerProfile profile = sellerProfileRepository.findById(sellerProfileId)
+            .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Seller profile not found"));
+
+        profile.setStatus(decision);
+        profile.setRejectionReason(decision == VerificationStatus.REJECTED ? reason : null);
+        profile.setReviewedAt(OffsetDateTime.now());
+        profile.setReviewedBy(admin.getId());
+        SellerProfile saved = sellerProfileRepository.save(profile);
+        return AdminSellerResponse.from(saved);
+    }
+
+    @Transactional(readOnly = true)
+    public List<AuctionResponse> getAuctionsByVerification(VerificationStatus filter) {
+        List<Auction> auctions = filter != null
+            ? auctionRepository.findByVerificationStatusOrderByCreatedAtAsc(filter)
+            : auctionRepository.findAll();
+        return auctions.stream()
+            .map(a -> AuctionResponse.from(a, auctionImageRepository.findByAuctionIdOrderBySortOrder(a.getId())))
+            .toList();
+    }
+
+    @Transactional
+    public AuctionResponse verifyAuction(UUID auctionId, VerificationStatus decision, String reason, User admin) {
+        if (decision != VerificationStatus.VERIFIED && decision != VerificationStatus.REJECTED) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Decision must be VERIFIED or REJECTED");
+        }
+        Auction auction = auctionRepository.findById(auctionId)
+            .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Auction not found"));
+
+        auction.setVerificationStatus(decision);
+        auction.setVerificationReason(decision == VerificationStatus.REJECTED ? reason : null);
+        auction.setVerifiedAt(OffsetDateTime.now());
+        auction.setVerifiedBy(admin.getId());
+        Auction saved = auctionRepository.save(auction);
+        List<AuctionImage> images = auctionImageRepository.findByAuctionIdOrderBySortOrder(saved.getId());
+        return AuctionResponse.from(saved, images);
     }
 }

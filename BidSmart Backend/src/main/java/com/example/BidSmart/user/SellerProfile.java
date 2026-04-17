@@ -5,6 +5,8 @@ import java.util.UUID;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -54,8 +56,18 @@ public class SellerProfile {
     @Column(name = "account_number", nullable = false, length = 50)
     private String accountNumber;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private String status = "APPROVED"; // Auto-approved for demo
+    private VerificationStatus status = VerificationStatus.PENDING;
+
+    @Column(name = "rejection_reason", columnDefinition = "TEXT")
+    private String rejectionReason;
+
+    @Column(name = "reviewed_at")
+    private OffsetDateTime reviewedAt;
+
+    @Column(name = "reviewed_by")
+    private UUID reviewedBy;
 
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
@@ -77,39 +89,48 @@ public class SellerProfile {
 
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
-    
+
     public User getUser() { return user; }
     public void setUser(User user) { this.user = user; }
-    
+
     public String getStoreName() { return storeName; }
     public void setStoreName(String storeName) { this.storeName = storeName; }
-    
+
     public String getBusinessCategory() { return businessCategory; }
     public void setBusinessCategory(String businessCategory) { this.businessCategory = businessCategory; }
-    
+
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
-    
+
     public String getLegalName() { return legalName; }
     public void setLegalName(String legalName) { this.legalName = legalName; }
-    
+
     public String getIdDocumentUrl() { return idDocumentUrl; }
     public void setIdDocumentUrl(String idDocumentUrl) { this.idDocumentUrl = idDocumentUrl; }
-    
+
     public String getAccountHolderName() { return accountHolderName; }
     public void setAccountHolderName(String accountHolderName) { this.accountHolderName = accountHolderName; }
-    
+
     public String getBankName() { return bankName; }
     public void setBankName(String bankName) { this.bankName = bankName; }
-    
+
     public String getRoutingNumber() { return routingNumber; }
     public void setRoutingNumber(String routingNumber) { this.routingNumber = routingNumber; }
-    
+
     public String getAccountNumber() { return accountNumber; }
     public void setAccountNumber(String accountNumber) { this.accountNumber = accountNumber; }
-    
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+
+    public VerificationStatus getStatus() { return status; }
+    public void setStatus(VerificationStatus status) { this.status = status; }
+
+    public String getRejectionReason() { return rejectionReason; }
+    public void setRejectionReason(String rejectionReason) { this.rejectionReason = rejectionReason; }
+
+    public OffsetDateTime getReviewedAt() { return reviewedAt; }
+    public void setReviewedAt(OffsetDateTime reviewedAt) { this.reviewedAt = reviewedAt; }
+
+    public UUID getReviewedBy() { return reviewedBy; }
+    public void setReviewedBy(UUID reviewedBy) { this.reviewedBy = reviewedBy; }
 
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }

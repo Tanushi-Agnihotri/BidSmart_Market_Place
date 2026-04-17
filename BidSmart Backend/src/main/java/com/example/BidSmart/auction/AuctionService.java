@@ -14,8 +14,10 @@ import com.example.BidSmart.auction.dto.AuctionResponse;
 import com.example.BidSmart.auction.dto.CreateAuctionRequest;
 import com.example.BidSmart.auction.dto.UpdateAuctionRequest;
 import com.example.BidSmart.exception.ApiException;
+import com.example.BidSmart.user.SellerProfileRepository;
 import com.example.BidSmart.user.User;
 import com.example.BidSmart.user.UserRole;
+import com.example.BidSmart.user.VerificationStatus;
 
 import com.example.BidSmart.watchlist.WatchlistRepository;
 
@@ -25,11 +27,13 @@ public class AuctionService {
     private final AuctionRepository auctionRepository;
     private final AuctionImageRepository imageRepository;
     private final WatchlistRepository watchlistRepository;
+    private final SellerProfileRepository sellerProfileRepository;
 
-    public AuctionService(AuctionRepository auctionRepository, AuctionImageRepository imageRepository, WatchlistRepository watchlistRepository) {
+    public AuctionService(AuctionRepository auctionRepository, AuctionImageRepository imageRepository, WatchlistRepository watchlistRepository, SellerProfileRepository sellerProfileRepository) {
         this.auctionRepository = auctionRepository;
         this.imageRepository = imageRepository;
         this.watchlistRepository = watchlistRepository;
+        this.sellerProfileRepository = sellerProfileRepository;
     }
 
     @Transactional(readOnly = true)
@@ -48,12 +52,18 @@ public class AuctionService {
             );
         }
 
-        return auctions.stream().map(this::toResponseWithImages).toList();
+        return auctions.stream()
+            .filter(a -> a.getVerificationStatus() == VerificationStatus.VERIFIED)
+            .map(this::toResponseWithImages)
+            .toList();
     }
 
     @Transactional(readOnly = true)
     public AuctionResponse getAuctionById(UUID id) {
         Auction auction = findAuctionOrThrow(id);
+        if (auction.getVerificationStatus() != VerificationStatus.VERIFIED) {
+            throw new ApiException(HttpStatus.NOT_FOUND, "Auction not found");
+        }
         return toResponseWithImages(auction);
     }
 
@@ -71,6 +81,13 @@ public class AuctionService {
             throw new ApiException(HttpStatus.FORBIDDEN, "Only sellers can create auctions");
         }
 
+        VerificationStatus sellerStatus = sellerProfileRepository.findByUserId(seller.getId())
+            .map(p -> p.getStatus())
+            .orElseThrow(() -> new ApiException(HttpStatus.FORBIDDEN, "Seller profile not found"));
+        if (sellerStatus != VerificationStatus.VERIFIED) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "Your seller account is not verified yet");
+        }
+
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime endTime = now.plusHours(request.durationHours());
 
@@ -84,6 +101,7 @@ public class AuctionService {
         auction.setStartTime(now);
         auction.setEndTime(endTime);
         auction.setStatus(AuctionStatus.ACTIVE);
+        auction.setVerificationStatus(VerificationStatus.PENDING);
         auction.setSeller(seller);
 
         Auction saved = auctionRepository.save(auction);

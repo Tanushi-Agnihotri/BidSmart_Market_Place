@@ -9,7 +9,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 
+import com.example.BidSmart.user.VerificationStatus;
+
 public interface AuctionRepository extends JpaRepository<Auction, UUID>, JpaSpecificationExecutor<Auction> {
+
+    List<Auction> findByVerificationStatusOrderByCreatedAtAsc(VerificationStatus verificationStatus);
+    long countByVerificationStatus(VerificationStatus verificationStatus);
 
     List<Auction> findBySellerIdOrderByCreatedAtDesc(UUID sellerId);
 

@@ -18,6 +18,7 @@ import com.example.BidSmart.exception.ApiException;
 import com.example.BidSmart.notification.NotificationService;
 import com.example.BidSmart.notification.NotificationType;
 import com.example.BidSmart.user.User;
+import com.example.BidSmart.user.VerificationStatus;
 
 @Service
 public class BidService {
@@ -36,6 +37,11 @@ public class BidService {
     public BidResponse placeBid(PlaceBidRequest request, User bidder) {
         Auction auction = auctionRepository.findById(request.auctionId())
             .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Auction not found"));
+
+        // Auction must be admin-verified
+        if (auction.getVerificationStatus() != VerificationStatus.VERIFIED) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "This auction is not accepting bids");
+        }
 
         // Auction must be active or ending soon
         if (auction.getStatus() != AuctionStatus.ACTIVE && auction.getStatus() != AuctionStatus.ENDING_SOON) {

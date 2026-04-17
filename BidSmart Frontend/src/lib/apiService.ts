@@ -72,10 +72,30 @@ export interface ApiAuction {
   startTime: string;
   endTime: string;
   status: 'ACTIVE' | 'UPCOMING' | 'ENDING_SOON' | 'CLOSED';
+  verificationStatus: 'PENDING' | 'VERIFIED' | 'REJECTED';
+  verificationReason: string | null;
   sellerId: string;
   sellerName: string;
   createdAt: string;
   images: string[];
+}
+
+export type VerificationStatus = 'PENDING' | 'VERIFIED' | 'REJECTED';
+
+export interface ApiAdminSeller {
+  id: string;
+  userId: string;
+  userFullName: string;
+  userEmail: string;
+  storeName: string;
+  businessCategory: string;
+  description: string | null;
+  legalName: string;
+  idDocumentUrl: string;
+  status: VerificationStatus;
+  rejectionReason: string | null;
+  reviewedAt: string | null;
+  createdAt: string;
 }
 
 export interface ApiImageResponse {
@@ -345,4 +365,23 @@ export const adminApi = {
     request<void>(`/api/admin/users/${userId}`, { method: 'DELETE' }),
   deleteAuction: (auctionId: string) =>
     request<void>(`/api/admin/auctions/${auctionId}`, { method: 'DELETE' }),
+
+  getSellers: (status?: VerificationStatus) => {
+    const qs = status ? `?status=${status}` : '';
+    return request<ApiAdminSeller[]>(`/api/admin/sellers${qs}`);
+  },
+  verifySeller: (id: string, decision: 'VERIFIED' | 'REJECTED', reason?: string) =>
+    request<ApiAdminSeller>(`/api/admin/sellers/${id}/verify`, {
+      method: 'PATCH',
+      body: JSON.stringify({ decision, reason }),
+    }),
+  getAuctionsByVerification: (verificationStatus?: VerificationStatus) => {
+    const qs = verificationStatus ? `?verificationStatus=${verificationStatus}` : '';
+    return request<ApiAuction[]>(`/api/admin/auctions${qs}`);
+  },
+  verifyAuction: (id: string, decision: 'VERIFIED' | 'REJECTED', reason?: string) =>
+    request<ApiAuction>(`/api/admin/auctions/${id}/verify`, {
+      method: 'PATCH',
+      body: JSON.stringify({ decision, reason }),
+    }),
 };
