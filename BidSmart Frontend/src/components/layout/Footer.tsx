@@ -49,7 +49,7 @@ const Footer = () => {
 
           {/* Link columns */}
           {[
-            { title: 'Platform', links: [['Browse Auctions', '/auctions'], ['How It Works', '/about'], ['Contact Us', '/contact']] },
+            { title: 'Platform', links: [['Browse Auctions', '/auctions'], ['About', '/about'], ['How It Works', '/about'], ['Contact Us', '/contact']] },
             { title: 'For Buyers', links: [['Start Bidding', '/auctions'], ['My Bids', '/buyer/my-bids'], ['Watchlist', '/buyer/watchlist']] },
             { title: 'For Sellers', links: [['List a Product', '/seller/products/new'], ['Seller Dashboard', '/seller/dashboard'], ['Results', '/seller/results']] },
             { title: 'Legal', links: [['Terms of Service', '/terms'], ['Privacy Policy', '/privacy'], ['Cookie Policy', '/cookies']] },
