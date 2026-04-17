@@ -7,7 +7,7 @@ import StatusBadge from '@/components/shared/StatusBadge';
 import AuctionCard from '@/components/shared/AuctionCard';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { ApiError, consentApi, ApiConsentStatus, ApiConsent } from '@/lib/apiService';
+import { ApiError, consentApi, ApiConsentStatus, ApiConsent, buyerProfileApi } from '@/lib/apiService';
 
 const POLL_INTERVAL = 10000; // 10 seconds
 
@@ -30,6 +30,14 @@ const AuctionDetail = () => {
   const [consentAgree, setConsentAgree] = useState(false);
   const [consentSubmitting, setConsentSubmitting] = useState(false);
   const [sellerConsents, setSellerConsents] = useState<ApiConsent[] | null>(null);
+  const [buyerStatus, setBuyerStatus] = useState<'NONE' | 'PENDING' | 'VERIFIED' | 'REJECTED' | null>(null);
+
+  useEffect(() => {
+    if (!currentUser) { setBuyerStatus(null); return; }
+    buyerProfileApi.getMine()
+      .then(p => setBuyerStatus(p.status))
+      .catch(() => setBuyerStatus('NONE'));
+  }, [currentUser?.id]);
 
   const loadConsent = useCallback(async () => {
     if (!id || !currentUser) return;
@@ -98,6 +106,14 @@ const AuctionDetail = () => {
 
   const isWatched = watchlist.includes(auction.id);
   const minBid = auction.currentBid > 0 ? auction.currentBid + auction.bidIncrement : auction.basePrice;
+  const notStarted = !!auction.startTime && new Date(auction.startTime).getTime() > Date.now();
+  const isOwnAuction = !!currentUser && currentUser.id === auction.sellerId;
+  const isBuyerVerified = buyerStatus === 'VERIFIED';
+  const needsBuyerVerification = !!currentUser && !isOwnAuction && !isBuyerVerified;
+  const handleAuctionStart = useCallback(() => {
+    refreshAuctions();
+    if (id) refreshBids(id);
+  }, [refreshAuctions, refreshBids, id]);
 
   const validateBid = (): boolean => {
     const amount = parseFloat(bidAmount);
@@ -118,6 +134,15 @@ const AuctionDetail = () => {
       navigate('/login');
       return;
     }
+    if (notStarted) {
+      toast.error('This auction has not started yet.');
+      return;
+    }
+    if (needsBuyerVerification) {
+      toast.error('Please complete buyer verification to participate.');
+      navigate('/become-buyer');
+      return;
+    }
     if (consentStatus?.required && !consentStatus?.signed) {
       toast.error('Please sign the consent form first.');
       setShowConsent(true);
@@ -129,6 +154,12 @@ const AuctionDetail = () => {
 
   const handleConsentSubmit = async () => {
     if (!auction || !currentUser) return;
+    if (needsBuyerVerification) {
+      toast.error('Please complete buyer verification first.');
+      setShowConsent(false);
+      navigate('/become-buyer');
+      return;
+    }
     if (!consentSignName.trim()) { toast.error('Please type your full name as signature.'); return; }
     if (!consentAgree) { toast.error('Please agree to the rules before signing.'); return; }
     setConsentSubmitting(true);
@@ -150,6 +181,11 @@ const AuctionDetail = () => {
     if (!currentUser) {
       toast.error('Please log in to save auctions to your watchlist.');
       navigate('/login');
+      return;
+    }
+    if (needsBuyerVerification) {
+      toast.error('Please complete buyer verification to use the watchlist.');
+      navigate('/become-buyer');
       return;
     }
     toggleWatchlist(auction.id);
@@ -401,10 +437,55 @@ const AuctionDetail = () => {
                   </div>
 
                   {/* Timer */}
-                  <CountdownTimer endTime={auction.endTime} onExpire={handleAuctionExpire} />
+                  {notStarted ? (
+                    <div className="space-y-2">
+                      <p className="text-xs uppercase tracking-[0.15em] font-semibold text-primary">Starts In</p>
+                      <CountdownTimer endTime={auction.startTime} onExpire={handleAuctionStart} />
+                      <p className="text-xs text-muted-foreground">
+                        Auction opens on{' '}
+                        <span className="font-medium text-foreground">
+                          {new Date(auction.startTime).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
+                        </span>
+                      </p>
+                    </div>
+                  ) : (
+                    <CountdownTimer endTime={auction.endTime} onExpire={handleAuctionExpire} />
+                  )}
+
+                  {/* Upcoming banner */}
+                  {notStarted && (
+                    <div className="rounded-xl border border-primary/30 bg-primary/5 p-4">
+                      <p className="text-sm font-semibold text-foreground">Bidding hasn't started yet</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        You'll be able to place a bid once the auction opens.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Buyer verification gate */}
+                  {needsBuyerVerification && (
+                    <div className="rounded-xl border border-warning/40 bg-warning/5 p-4 space-y-2">
+                      <p className="text-sm font-semibold text-foreground">Verification required to participate</p>
+                      <p className="text-xs text-muted-foreground">
+                        {buyerStatus === 'PENDING'
+                          ? 'Your buyer verification is pending admin approval. You can bid once approved.'
+                          : buyerStatus === 'REJECTED'
+                            ? 'Your previous verification was rejected. Please resubmit to bid or save.'
+                            : 'Verify your identity to bid, sign consent forms, and save auctions.'}
+                      </p>
+                      {buyerStatus !== 'PENDING' && (
+                        <button
+                          onClick={() => navigate('/become-buyer')}
+                          className="w-full rounded-xl gradient-gold py-2.5 text-sm font-bold text-primary-foreground shadow-elegant hover:scale-[1.01] transition-all"
+                        >
+                          {buyerStatus === 'REJECTED' ? 'Resubmit Verification' : 'Verify to Participate'}
+                        </button>
+                      )}
+                    </div>
+                  )}
 
                   {/* Consent banner */}
-                  {consentStatus?.required && !consentStatus?.signed && auction.sellerId !== currentUser?.id && (
+                  {!needsBuyerVerification && consentStatus?.required && !consentStatus?.signed && auction.sellerId !== currentUser?.id && (
                     <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 space-y-2">
                       <p className="text-sm font-semibold text-foreground">Consent required before bidding</p>
                       <p className="text-xs text-muted-foreground">
@@ -439,7 +520,7 @@ const AuctionDetail = () => {
                       )}
                     </div>
                   )}
-                  {consentStatus?.required && consentStatus?.signed && (
+                  {!needsBuyerVerification && consentStatus?.required && consentStatus?.signed && (
                     <div className="rounded-xl border border-success/30 bg-success/5 p-3 space-y-2">
                       <div className="flex items-center gap-2">
                         <MdOutlineCheck className="h-4 w-4 text-success" />
@@ -463,7 +544,7 @@ const AuctionDetail = () => {
                   )}
 
                   {/* Bid Input */}
-                  {auction.status !== 'closed' && auction.status !== 'upcoming' && (
+                  {auction.status !== 'closed' && auction.status !== 'upcoming' && !notStarted && !needsBuyerVerification && (
                     <div className="space-y-3">
                       <p className="text-sm text-muted-foreground">
                         Min. next bid: <span className="font-mono font-semibold text-foreground">₹{minBid.toLocaleString()}</span>

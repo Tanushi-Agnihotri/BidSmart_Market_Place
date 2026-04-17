@@ -18,6 +18,7 @@ import com.example.BidSmart.consent.AuctionConsentRepository;
 import com.example.BidSmart.exception.ApiException;
 import com.example.BidSmart.notification.NotificationService;
 import com.example.BidSmart.notification.NotificationType;
+import com.example.BidSmart.user.BuyerProfileRepository;
 import com.example.BidSmart.user.User;
 import com.example.BidSmart.user.VerificationStatus;
 
@@ -28,20 +29,28 @@ public class BidService {
     private final AuctionRepository auctionRepository;
     private final NotificationService notificationService;
     private final AuctionConsentRepository consentRepository;
+    private final BuyerProfileRepository buyerProfileRepository;
 
     public BidService(BidRepository bidRepository, AuctionRepository auctionRepository,
                       NotificationService notificationService,
-                      AuctionConsentRepository consentRepository) {
+                      AuctionConsentRepository consentRepository,
+                      BuyerProfileRepository buyerProfileRepository) {
         this.bidRepository = bidRepository;
         this.auctionRepository = auctionRepository;
         this.notificationService = notificationService;
         this.consentRepository = consentRepository;
+        this.buyerProfileRepository = buyerProfileRepository;
     }
 
     @Transactional
     public BidResponse placeBid(PlaceBidRequest request, User bidder) {
         Auction auction = auctionRepository.findById(request.auctionId())
             .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Auction not found"));
+
+        // Buyer must be verified
+        if (!buyerProfileRepository.existsByUserIdAndStatus(bidder.getId(), VerificationStatus.VERIFIED)) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "You must complete buyer verification before bidding");
+        }
 
         // Auction must be admin-verified
         if (auction.getVerificationStatus() != VerificationStatus.VERIFIED) {

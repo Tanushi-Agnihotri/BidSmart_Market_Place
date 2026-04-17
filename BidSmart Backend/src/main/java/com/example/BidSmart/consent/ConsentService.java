@@ -15,21 +15,30 @@ import com.example.BidSmart.consent.dto.ConsentResponse;
 import com.example.BidSmart.consent.dto.ConsentStatusResponse;
 import com.example.BidSmart.consent.dto.SignConsentRequest;
 import com.example.BidSmart.exception.ApiException;
+import com.example.BidSmart.user.BuyerProfileRepository;
 import com.example.BidSmart.user.User;
+import com.example.BidSmart.user.VerificationStatus;
 
 @Service
 public class ConsentService {
 
     private final AuctionConsentRepository consentRepository;
     private final AuctionRepository auctionRepository;
+    private final BuyerProfileRepository buyerProfileRepository;
 
-    public ConsentService(AuctionConsentRepository consentRepository, AuctionRepository auctionRepository) {
+    public ConsentService(AuctionConsentRepository consentRepository, AuctionRepository auctionRepository,
+                          BuyerProfileRepository buyerProfileRepository) {
         this.consentRepository = consentRepository;
         this.auctionRepository = auctionRepository;
+        this.buyerProfileRepository = buyerProfileRepository;
     }
 
     @Transactional
     public ConsentResponse signConsent(SignConsentRequest request, User user, String ip) {
+        if (!buyerProfileRepository.existsByUserIdAndStatus(user.getId(), VerificationStatus.VERIFIED)) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "Complete buyer verification before signing consent");
+        }
+
         Auction auction = auctionRepository.findById(request.auctionId())
             .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Auction not found"));
 

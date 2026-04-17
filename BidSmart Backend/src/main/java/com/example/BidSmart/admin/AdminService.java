@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.BidSmart.admin.dto.AdminBuyerResponse;
 import com.example.BidSmart.admin.dto.AdminSellerResponse;
 import com.example.BidSmart.admin.dto.AdminUserResponse;
 import com.example.BidSmart.admin.dto.ChartDataResponse;
@@ -23,6 +24,8 @@ import com.example.BidSmart.bid.BidRepository;
 import com.example.BidSmart.exception.ApiException;
 import com.example.BidSmart.notification.NotificationService;
 import com.example.BidSmart.notification.NotificationType;
+import com.example.BidSmart.user.BuyerProfile;
+import com.example.BidSmart.user.BuyerProfileRepository;
 import com.example.BidSmart.user.SellerProfile;
 import com.example.BidSmart.user.SellerProfileRepository;
 import com.example.BidSmart.user.User;
@@ -41,15 +44,17 @@ public class AdminService {
     private final AuctionImageRepository auctionImageRepository;
     private final WatchlistRepository watchlistRepository;
     private final SellerProfileRepository sellerProfileRepository;
+    private final BuyerProfileRepository buyerProfileRepository;
     private final NotificationService notificationService;
 
-    public AdminService(UserRepository userRepository, AuctionRepository auctionRepository, BidRepository bidRepository, AuctionImageRepository auctionImageRepository, WatchlistRepository watchlistRepository, SellerProfileRepository sellerProfileRepository, NotificationService notificationService) {
+    public AdminService(UserRepository userRepository, AuctionRepository auctionRepository, BidRepository bidRepository, AuctionImageRepository auctionImageRepository, WatchlistRepository watchlistRepository, SellerProfileRepository sellerProfileRepository, BuyerProfileRepository buyerProfileRepository, NotificationService notificationService) {
         this.userRepository = userRepository;
         this.auctionRepository = auctionRepository;
         this.bidRepository = bidRepository;
         this.auctionImageRepository = auctionImageRepository;
         this.watchlistRepository = watchlistRepository;
         this.sellerProfileRepository = sellerProfileRepository;
+        this.buyerProfileRepository = buyerProfileRepository;
         this.notificationService = notificationService;
     }
 
@@ -292,5 +297,45 @@ public class AdminService {
         }
         List<AuctionImage> images = auctionImageRepository.findByAuctionIdOrderBySortOrder(saved.getId());
         return AuctionResponse.from(saved, images);
+    }
+
+    @Transactional(readOnly = true)
+    public List<AdminBuyerResponse> getBuyers(VerificationStatus filter) {
+        List<BuyerProfile> profiles = filter != null
+            ? buyerProfileRepository.findByStatusOrderByCreatedAtAsc(filter)
+            : buyerProfileRepository.findAllByOrderByCreatedAtDesc();
+        return profiles.stream().map(AdminBuyerResponse::from).toList();
+    }
+
+    @Transactional
+    public AdminBuyerResponse verifyBuyer(UUID buyerProfileId, VerificationStatus decision, String reason, User admin) {
+        if (decision != VerificationStatus.VERIFIED && decision != VerificationStatus.REJECTED) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Decision must be VERIFIED or REJECTED");
+        }
+        BuyerProfile profile = buyerProfileRepository.findById(buyerProfileId)
+            .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Buyer profile not found"));
+
+        profile.setStatus(decision);
+        profile.setRejectionReason(decision == VerificationStatus.REJECTED ? reason : null);
+        profile.setReviewedAt(OffsetDateTime.now());
+        profile.setReviewedBy(admin.getId());
+        BuyerProfile saved = buyerProfileRepository.save(profile);
+
+        if (decision == VerificationStatus.VERIFIED) {
+            notificationService.createNotification(
+                saved.getUser(),
+                NotificationType.SYSTEM,
+                "Buyer account verified",
+                "Your identity has been verified. You can now bid, sign consents, and use the watchlist."
+            );
+        } else {
+            notificationService.createNotification(
+                saved.getUser(),
+                NotificationType.SYSTEM,
+                "Buyer verification rejected",
+                "Your buyer verification was rejected." + (reason != null && !reason.isBlank() ? " Reason: " + reason : "")
+            );
+        }
+        return AdminBuyerResponse.from(saved);
     }
 }

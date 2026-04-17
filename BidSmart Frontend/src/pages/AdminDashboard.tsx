@@ -11,7 +11,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { mockUsers, type User } from '@/data/mockData';
 import { cn } from '@/lib/utils';
-import { adminApi, type ApiAdminUser, type ApiDashboardStats, type ApiAdminSeller, type ApiAuction } from '@/lib/apiService';
+import { adminApi, type ApiAdminUser, type ApiDashboardStats, type ApiAdminSeller, type ApiAdminBuyer, type ApiAuction } from '@/lib/apiService';
 import { toast } from '@/hooks/use-toast';
 
 const COLORS = ['hsl(42,50%,54%)', 'hsl(200,60%,50%)', 'hsl(150,50%,45%)', 'hsl(280,50%,55%)', 'hsl(0,0%,45%)'];
@@ -37,10 +37,12 @@ const AdminDashboard = () => {
 
   // Verification queues
   const [pendingSellers, setPendingSellers] = useState<ApiAdminSeller[]>([]);
+  const [pendingBuyers, setPendingBuyers] = useState<ApiAdminBuyer[]>([]);
   const [pendingAuctions, setPendingAuctions] = useState<ApiAuction[]>([]);
   const [verifying, setVerifying] = useState(false);
   const [rejectionTarget, setRejectionTarget] = useState<
     | { kind: 'seller'; id: string; name: string }
+    | { kind: 'buyer'; id: string; name: string }
     | { kind: 'auction'; id: string; name: string }
     | null
   >(null);
@@ -48,6 +50,9 @@ const AdminDashboard = () => {
 
   const loadPendingSellers = () => {
     adminApi.getSellers('PENDING').then(setPendingSellers).catch(() => {});
+  };
+  const loadPendingBuyers = () => {
+    adminApi.getBuyers('PENDING').then(setPendingBuyers).catch(() => {});
   };
   const loadPendingAuctions = () => {
     adminApi.getAuctionsByVerification('PENDING').then(setPendingAuctions).catch(() => {});
@@ -71,6 +76,7 @@ const AdminDashboard = () => {
       })));
     }).catch(() => {});
     loadPendingSellers();
+    loadPendingBuyers();
     loadPendingAuctions();
   }, [authToken, refreshAuctions]);
 
@@ -80,6 +86,19 @@ const AdminDashboard = () => {
       await adminApi.verifySeller(id, 'VERIFIED');
       setPendingSellers(prev => prev.filter(s => s.id !== id));
       toast({ title: 'Seller verified' });
+    } catch {
+      toast({ title: 'Verification failed', variant: 'destructive' });
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  const handleApproveBuyer = async (id: string) => {
+    setVerifying(true);
+    try {
+      await adminApi.verifyBuyer(id, 'VERIFIED');
+      setPendingBuyers(prev => prev.filter(b => b.id !== id));
+      toast({ title: 'Buyer verified' });
     } catch {
       toast({ title: 'Verification failed', variant: 'destructive' });
     } finally {
@@ -109,6 +128,10 @@ const AdminDashboard = () => {
         await adminApi.verifySeller(rejectionTarget.id, 'REJECTED', rejectionReason || undefined);
         setPendingSellers(prev => prev.filter(s => s.id !== rejectionTarget.id));
         toast({ title: 'Seller rejected' });
+      } else if (rejectionTarget.kind === 'buyer') {
+        await adminApi.verifyBuyer(rejectionTarget.id, 'REJECTED', rejectionReason || undefined);
+        setPendingBuyers(prev => prev.filter(b => b.id !== rejectionTarget.id));
+        toast({ title: 'Buyer rejected' });
       } else {
         await adminApi.verifyAuction(rejectionTarget.id, 'REJECTED', rejectionReason || undefined);
         setPendingAuctions(prev => prev.filter(a => a.id !== rejectionTarget.id));
@@ -375,6 +398,12 @@ const AdminDashboard = () => {
                 <span className="ml-1.5 rounded-full bg-primary/20 px-1.5 py-0.5 text-[10px] font-bold">{pendingSellers.length}</span>
               )}
             </TabsTrigger>
+            <TabsTrigger value="verify-buyers" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <Users className="h-3.5 w-3.5 mr-1.5" /> Pending Buyers
+              {pendingBuyers.length > 0 && (
+                <span className="ml-1.5 rounded-full bg-primary/20 px-1.5 py-0.5 text-[10px] font-bold">{pendingBuyers.length}</span>
+              )}
+            </TabsTrigger>
             <TabsTrigger value="verify-auctions" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <VerifiedIcon className="h-3.5 w-3.5 mr-1.5" /> Pending Auctions
               {pendingAuctions.length > 0 && (
@@ -594,6 +623,65 @@ const AdminDashboard = () => {
                         </button>
                         <button
                           onClick={() => setRejectionTarget({ kind: 'seller', id: s.id, name: s.storeName })}
+                          disabled={verifying}
+                          className="rounded-xl bg-destructive/10 text-destructive hover:bg-destructive/20 px-3 py-2 text-sm font-semibold flex items-center gap-1.5 disabled:opacity-50"
+                        >
+                          <XIcon className="h-4 w-4" /> Reject
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="verify-buyers">
+            <div className="rounded-2xl border border-border bg-card overflow-hidden">
+              {pendingBuyers.length === 0 ? (
+                <div className="p-10 text-center text-muted-foreground">
+                  <VerifiedIcon className="mx-auto mb-2 h-8 w-8 opacity-60" />
+                  No pending buyer verifications
+                </div>
+              ) : (
+                <div className="divide-y divide-border">
+                  {pendingBuyers.map(b => (
+                    <div key={b.id} className="p-5 flex flex-col lg:flex-row gap-4 lg:items-center">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="h-10 w-10 rounded-full bg-primary/10 border border-primary/20 text-primary font-bold flex items-center justify-center text-sm shrink-0">
+                            {b.userFullName.charAt(0).toUpperCase()}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-semibold truncate">{b.legalName}</p>
+                            <p className="text-sm text-muted-foreground truncate">{b.userFullName} · {b.userEmail}</p>
+                          </div>
+                        </div>
+                        <div className="grid sm:grid-cols-2 gap-x-6 gap-y-1 text-sm ml-13">
+                          <div><span className="text-muted-foreground">ID Type:</span> {b.idDocumentType.replace('_', ' ')}</div>
+                          <div><span className="text-muted-foreground">ID Number:</span> {b.idDocumentNumber}</div>
+                          <div className="sm:col-span-2">
+                            <a
+                              href={b.idDocumentUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-primary hover:underline"
+                            >
+                              View ID document →
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex gap-2 shrink-0">
+                        <button
+                          onClick={() => handleApproveBuyer(b.id)}
+                          disabled={verifying}
+                          className="rounded-xl bg-green-500/15 text-green-600 hover:bg-green-500/25 px-3 py-2 text-sm font-semibold flex items-center gap-1.5 disabled:opacity-50"
+                        >
+                          <CheckCircle2 className="h-4 w-4" /> Approve
+                        </button>
+                        <button
+                          onClick={() => setRejectionTarget({ kind: 'buyer', id: b.id, name: b.legalName })}
                           disabled={verifying}
                           className="rounded-xl bg-destructive/10 text-destructive hover:bg-destructive/20 px-3 py-2 text-sm font-semibold flex items-center gap-1.5 disabled:opacity-50"
                         >

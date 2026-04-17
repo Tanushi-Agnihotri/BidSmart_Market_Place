@@ -125,6 +125,23 @@ export interface ApiAdminSeller {
   createdAt: string;
 }
 
+export type IdDocumentType = 'AADHAR' | 'PAN' | 'PASSPORT' | 'DRIVING_LICENSE';
+
+export interface ApiAdminBuyer {
+  id: string;
+  userId: string;
+  userFullName: string;
+  userEmail: string;
+  legalName: string;
+  idDocumentType: IdDocumentType;
+  idDocumentNumber: string;
+  idDocumentUrl: string;
+  status: VerificationStatus;
+  rejectionReason: string | null;
+  reviewedAt: string | null;
+  createdAt: string;
+}
+
 export interface ApiImageResponse {
   id: string;
   url: string;
@@ -338,6 +355,35 @@ export const sellerProfileApi = {
   getMine: () => request<ApiMySellerProfile>('/api/users/me/seller-profile'),
 };
 
+// Buyer profile (own)
+export interface ApiMyBuyerProfile {
+  status: VerificationStatus;
+  legalName: string;
+  idDocumentType: IdDocumentType;
+  idDocumentNumber: string;
+  idDocumentUrl: string;
+  rejectionReason: string | null;
+  reviewedAt: string | null;
+  createdAt: string;
+}
+
+export const buyerProfileApi = {
+  getMine: () => request<ApiMyBuyerProfile>('/api/users/me/buyer-profile'),
+  submit: async (formData: FormData): Promise<ApiMyBuyerProfile> => {
+    const token = getToken();
+    const res = await fetch(apiUrl('/api/users/me/buyer-profile'), {
+      method: 'POST',
+      headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+      body: formData,
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new ApiError(res.status, body.message || 'Verification failed', body.validationErrors);
+    }
+    return res.json();
+  },
+};
+
 // Notifications
 export const notificationApi = {
   getMine: () => request<ApiNotification[]>('/api/notifications'),
@@ -506,6 +552,15 @@ export const adminApi = {
   },
   verifySeller: (id: string, decision: 'VERIFIED' | 'REJECTED', reason?: string) =>
     request<ApiAdminSeller>(`/api/admin/sellers/${id}/verify`, {
+      method: 'PATCH',
+      body: JSON.stringify({ decision, reason }),
+    }),
+  getBuyers: (status?: VerificationStatus) => {
+    const qs = status ? `?status=${status}` : '';
+    return request<ApiAdminBuyer[]>(`/api/admin/buyers${qs}`);
+  },
+  verifyBuyer: (id: string, decision: 'VERIFIED' | 'REJECTED', reason?: string) =>
+    request<ApiAdminBuyer>(`/api/admin/buyers/${id}/verify`, {
       method: 'PATCH',
       body: JSON.stringify({ decision, reason }),
     }),

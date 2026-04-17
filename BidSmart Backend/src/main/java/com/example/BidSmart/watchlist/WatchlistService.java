@@ -11,7 +11,9 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.BidSmart.auction.Auction;
 import com.example.BidSmart.auction.AuctionRepository;
 import com.example.BidSmart.exception.ApiException;
+import com.example.BidSmart.user.BuyerProfileRepository;
 import com.example.BidSmart.user.User;
+import com.example.BidSmart.user.VerificationStatus;
 import com.example.BidSmart.watchlist.dto.WatchlistResponse;
 import com.example.BidSmart.watchlist.dto.WatchlistStatusResponse;
 
@@ -20,14 +22,21 @@ public class WatchlistService {
 
     private final WatchlistRepository watchlistRepository;
     private final AuctionRepository auctionRepository;
+    private final BuyerProfileRepository buyerProfileRepository;
 
-    public WatchlistService(WatchlistRepository watchlistRepository, AuctionRepository auctionRepository) {
+    public WatchlistService(WatchlistRepository watchlistRepository, AuctionRepository auctionRepository,
+                            BuyerProfileRepository buyerProfileRepository) {
         this.watchlistRepository = watchlistRepository;
         this.auctionRepository = auctionRepository;
+        this.buyerProfileRepository = buyerProfileRepository;
     }
 
     @Transactional
     public WatchlistStatusResponse toggleWatchlist(UUID auctionId, User user) {
+        if (!buyerProfileRepository.existsByUserIdAndStatus(user.getId(), VerificationStatus.VERIFIED)) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "Complete buyer verification to use the watchlist");
+        }
+
         Auction auction = auctionRepository.findById(auctionId)
             .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Auction not found"));
 

@@ -39,6 +39,7 @@ import SellerResults from "./pages/SellerResults";
 import AddEditProduct from "./pages/AddEditProduct";
 import Reports from "./pages/Reports";
 import BecomeSeller from "./pages/BecomeSeller";
+import BecomeBuyer from "./pages/BecomeBuyer";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -88,6 +89,7 @@ const App = () => (
             <Route path="/profile" element={<ProtectedRoute allowedRoles={['buyer', 'seller', 'admin']}><Profile /></ProtectedRoute>} />
             <Route path="/auctions/:id/winner" element={<ProtectedRoute allowedRoles={['buyer', 'seller', 'admin']}><WinnerDeclaration /></ProtectedRoute>} />
             <Route path="/become-seller" element={<ProtectedRoute allowedRoles={['buyer', 'guest', 'seller']}><BecomeSeller /></ProtectedRoute>} />
+            <Route path="/become-buyer" element={<ProtectedRoute allowedRoles={['buyer', 'seller']}><BecomeBuyer /></ProtectedRoute>} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>

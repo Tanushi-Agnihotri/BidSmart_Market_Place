@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.BidSmart.admin.dto.AdminBuyerResponse;
 import com.example.BidSmart.admin.dto.AdminSellerResponse;
 import com.example.BidSmart.admin.dto.AdminUserResponse;
 import com.example.BidSmart.admin.dto.ChartDataResponse;
@@ -91,6 +92,21 @@ public class AdminController {
             Authentication authentication) {
         User admin = (User) authentication.getPrincipal();
         return ResponseEntity.ok(adminService.verifySeller(id, request.decision(), request.reason(), admin));
+    }
+
+    @GetMapping("/buyers")
+    public ResponseEntity<List<AdminBuyerResponse>> getBuyers(
+            @RequestParam(required = false) VerificationStatus status) {
+        return ResponseEntity.ok(adminService.getBuyers(status));
+    }
+
+    @PatchMapping("/buyers/{id}/verify")
+    public ResponseEntity<AdminBuyerResponse> verifyBuyer(
+            @PathVariable UUID id,
+            @Valid @RequestBody VerifyRequest request,
+            Authentication authentication) {
+        User admin = (User) authentication.getPrincipal();
+        return ResponseEntity.ok(adminService.verifyBuyer(id, request.decision(), request.reason(), admin));
     }
 
     @GetMapping("/auctions")
