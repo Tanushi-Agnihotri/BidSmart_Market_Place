@@ -7,7 +7,7 @@ import {
   MdOutlineGavel, MdOutlineTrendingUp, MdOutlineStar,
 } from 'react-icons/md';
 import { statsApi, type ApiPublicStats } from '@/lib/apiService';
-import heroImg from '@/assets/About.png';
+import heroImg from '@/assets/hero-auction.jpg';
 import artImg from '@/assets/auction-art.jpg';
 import jewelryImg from '@/assets/auction-jewelry.jpg';
 import watchImg from '@/assets/auction-watch.jpg';

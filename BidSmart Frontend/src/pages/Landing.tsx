@@ -5,7 +5,7 @@ import { useApp } from '@/context/AppContext';
 import AuctionCard from '@/components/shared/AuctionCard';
 import { mockTestimonials, categories } from '@/data/mockData';
 import { auctionApi, statsApi, type ApiPublicStats } from '@/lib/apiService';
-import heroImg from '@/assets/hero-auction.jpg';
+import heroImg from '@/assets/browse.png';
 import artImg from '@/assets/auction-art.jpg';
 import jewelryImg from '@/assets/auction-jewelry.jpg';
 import watchImg from '@/assets/auction-watch.jpg';
@@ -42,8 +42,8 @@ const Landing = () => {
       <section className="relative min-h-screen flex items-center overflow-hidden">
         <div className="absolute inset-0">
           <img src={heroImg} alt="Luxury auction" className="h-full w-full object-cover animate-hero-zoom" />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/70 to-black/30" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-black/10" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-black/10" />
           <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background to-transparent" />
         </div>
         {/* Particles */}
