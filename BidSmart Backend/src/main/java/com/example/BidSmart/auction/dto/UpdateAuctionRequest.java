@@ -1,6 +1,7 @@
 package com.example.BidSmart.auction.dto;
 
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 
 import com.example.BidSmart.auction.AuctionCondition;
 
@@ -23,6 +24,11 @@ public record UpdateAuctionRequest(
     BigDecimal basePrice,
 
     @DecimalMin(value = "0.01", message = "Bid increment must be greater than 0")
-    BigDecimal bidIncrement
+    BigDecimal bidIncrement,
+
+    @Size(max = 10000) String rulesAndRegulations,
+    Boolean consentRequired,
+    OffsetDateTime consentStartTime,
+    OffsetDateTime consentEndTime
 ) {
 }

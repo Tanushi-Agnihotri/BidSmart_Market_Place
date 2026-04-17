@@ -7,7 +7,7 @@ import StatusBadge from '@/components/shared/StatusBadge';
 import AuctionCard from '@/components/shared/AuctionCard';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { ApiError } from '@/lib/apiService';
+import { ApiError, consentApi, ApiConsentStatus, ApiConsent } from '@/lib/apiService';
 
 const POLL_INTERVAL = 10000; // 10 seconds
 
@@ -24,6 +24,30 @@ const AuctionDetail = () => {
   const [bidding, setBidding] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [selectedImageIdx, setSelectedImageIdx] = useState(0);
+  const [consentStatus, setConsentStatus] = useState<ApiConsentStatus | null>(null);
+  const [showConsent, setShowConsent] = useState(false);
+  const [consentSignName, setConsentSignName] = useState('');
+  const [consentAgree, setConsentAgree] = useState(false);
+  const [consentSubmitting, setConsentSubmitting] = useState(false);
+  const [sellerConsents, setSellerConsents] = useState<ApiConsent[] | null>(null);
+
+  const loadConsent = useCallback(async () => {
+    if (!id || !currentUser) return;
+    try {
+      const status = await consentApi.getStatus(id);
+      setConsentStatus(status);
+    } catch {
+      setConsentStatus(null);
+    }
+  }, [id, currentUser]);
+
+  useEffect(() => { loadConsent(); }, [loadConsent]);
+
+  useEffect(() => {
+    if (!auction || !currentUser) return;
+    if (auction.sellerId !== currentUser.id) { setSellerConsents(null); return; }
+    consentApi.listByAuction(auction.id).then(setSellerConsents).catch(() => setSellerConsents([]));
+  }, [auction?.id, currentUser?.id, auction?.sellerId]);
 
   useEffect(() => {
     if (auction) {
@@ -94,8 +118,32 @@ const AuctionDetail = () => {
       navigate('/login');
       return;
     }
+    if (consentStatus?.required && !consentStatus?.signed) {
+      toast.error('Please sign the consent form first.');
+      setShowConsent(true);
+      return;
+    }
     if (!validateBid()) return;
     setShowConfirm(true);
+  };
+
+  const handleConsentSubmit = async () => {
+    if (!auction || !currentUser) return;
+    if (!consentSignName.trim()) { toast.error('Please type your full name as signature.'); return; }
+    if (!consentAgree) { toast.error('Please agree to the rules before signing.'); return; }
+    setConsentSubmitting(true);
+    try {
+      await consentApi.sign(auction.id, consentSignName.trim());
+      toast.success('Consent signed. You can now bid on this auction.');
+      setShowConsent(false);
+      setConsentAgree(false);
+      await loadConsent();
+    } catch (err) {
+      const msg = err instanceof ApiError ? err.message : 'Failed to sign consent';
+      toast.error(msg);
+    } finally {
+      setConsentSubmitting(false);
+    }
   };
 
   const handleWatchlistClick = () => {
@@ -276,6 +324,53 @@ const AuctionDetail = () => {
                   </div>
                 </div>
               )}
+
+              {/* Seller-only: signed consents list */}
+              {sellerConsents !== null && auction.sellerId === currentUser?.id && (
+                <div className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-card animate-float-up delay-200">
+                  <div className="p-5">
+                    <div className="flex items-center gap-2.5 mb-4">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/15">
+                        <MdOutlineVerifiedUser className="h-4 w-4 text-primary" />
+                      </div>
+                      <h3 className="font-display text-lg font-semibold">Signed Consents</h3>
+                      <span className="ml-auto text-xs font-mono text-muted-foreground bg-muted rounded-full px-2 py-0.5">{sellerConsents.length} total</span>
+                    </div>
+                    {sellerConsents.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">No buyer has signed consent yet.</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {sellerConsents.map(c => (
+                          <div key={c.id} className="flex items-center justify-between rounded-xl border border-border/60 bg-muted/30 px-4 py-2.5">
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-medium truncate">{c.userName}</span>
+                                {c.userVerified && <MdOutlineVerifiedUser className="h-3.5 w-3.5 text-primary shrink-0" />}
+                              </div>
+                              <p className="text-xs text-muted-foreground truncate">{c.userEmail}</p>
+                              <p className="text-xs text-muted-foreground">
+                                Signed {new Date(c.signedAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
+                              </p>
+                            </div>
+                            <button
+                              onClick={async () => {
+                                try {
+                                  await consentApi.openDocument(auction.id, c.userId);
+                                } catch (e) {
+                                  toast.error(e instanceof Error ? e.message : 'Unable to open document');
+                                }
+                              }}
+                              className="shrink-0 text-xs font-semibold text-primary hover:underline"
+                            >
+                              View →
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -308,6 +403,65 @@ const AuctionDetail = () => {
                   {/* Timer */}
                   <CountdownTimer endTime={auction.endTime} onExpire={handleAuctionExpire} />
 
+                  {/* Consent banner */}
+                  {consentStatus?.required && !consentStatus?.signed && auction.sellerId !== currentUser?.id && (
+                    <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 space-y-2">
+                      <p className="text-sm font-semibold text-foreground">Consent required before bidding</p>
+                      <p className="text-xs text-muted-foreground">
+                        {consentStatus.windowOpen
+                          ? 'Review the seller\'s rules and sign to participate in this auction.'
+                          : 'The consent window is not currently open.'}
+                      </p>
+                      {(consentStatus.consentStartTime || consentStatus.consentEndTime) && (
+                        <div className="rounded-lg bg-background/60 border border-border/40 p-2.5 text-[11px] space-y-1">
+                          {consentStatus.consentStartTime && (
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-muted-foreground">Opens</span>
+                              <span className="font-medium text-foreground">
+                                {new Date(consentStatus.consentStartTime).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
+                              </span>
+                            </div>
+                          )}
+                          {consentStatus.consentEndTime && (
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-muted-foreground">Closes</span>
+                              <span className="font-medium text-foreground">
+                                {new Date(consentStatus.consentEndTime).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      {consentStatus.windowOpen && (
+                        <button onClick={() => setShowConsent(true)} className="w-full rounded-xl gradient-gold py-2.5 text-sm font-bold text-primary-foreground shadow-elegant hover:scale-[1.01] transition-all">
+                          Sign Consent to Participate
+                        </button>
+                      )}
+                    </div>
+                  )}
+                  {consentStatus?.required && consentStatus?.signed && (
+                    <div className="rounded-xl border border-success/30 bg-success/5 p-3 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <MdOutlineCheck className="h-4 w-4 text-success" />
+                        <p className="text-xs text-muted-foreground">Consent signed — you're cleared to bid.</p>
+                      </div>
+                      {consentStatus.consent && (
+                        <button
+                          onClick={async () => {
+                            try {
+                              await consentApi.openDocument(auction.id, consentStatus.consent!.userId);
+                            } catch (e) {
+                              toast.error(e instanceof Error ? e.message : 'Unable to open document');
+                            }
+                          }}
+                          className="text-xs font-semibold text-primary hover:underline"
+                        >
+                          View consent document →
+                        </button>
+                      )}
+                    </div>
+                  )}
+
                   {/* Bid Input */}
                   {auction.status !== 'closed' && auction.status !== 'upcoming' && (
                     <div className="space-y-3">
@@ -329,7 +483,7 @@ const AuctionDetail = () => {
                       )}
                       <button
                         onClick={handleBidClick}
-                        disabled={bidding}
+                        disabled={bidding || (consentStatus?.required && !consentStatus?.signed)}
                         className="w-full rounded-xl gradient-gold py-3.5 text-base font-bold text-primary-foreground shadow-elegant transition-all hover:scale-[1.02] hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:scale-100"
                       >
                         {bidding ? (
@@ -430,6 +584,63 @@ const AuctionDetail = () => {
                 className="flex-1 rounded-xl gradient-gold py-2.5 text-sm font-bold text-primary-foreground transition-all hover:scale-[1.02] shadow-sm"
               >
                 Confirm Bid
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Consent Form Dialog */}
+      {showConsent && consentStatus?.required && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center pt-16 bg-black/50 backdrop-blur-sm animate-fade-in overflow-y-auto">
+          <div className="relative overflow-hidden bg-card border border-border rounded-2xl p-6 max-w-lg w-full mx-4 my-8 shadow-xl space-y-4">
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary/60 via-primary to-primary/60" />
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/15">
+                <MdOutlineVerifiedUser className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-display text-xl font-bold">Auction Consent Form</h3>
+                <p className="text-xs text-muted-foreground">{auction.title}</p>
+              </div>
+            </div>
+
+            <div className="rounded-xl bg-muted/50 border border-border p-3 space-y-1 text-xs">
+              <div className="flex justify-between"><span className="text-muted-foreground">Buyer ID</span><span className="font-mono">{currentUser?.id}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Name</span><span className="font-medium">{currentUser?.name}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Email</span><span>{currentUser?.email}</span></div>
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Status</span>
+                <span className="inline-flex items-center gap-1 text-success font-semibold"><MdOutlineCheck className="h-3 w-3" /> Verified</span>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Rules &amp; Regulations</p>
+              <div className="max-h-52 overflow-y-auto rounded-xl border border-border bg-muted/30 p-3 text-xs whitespace-pre-wrap">
+                {consentStatus.rulesAndRegulations || 'No rules provided.'}
+              </div>
+            </div>
+
+            <label className="flex items-start gap-2 text-xs">
+              <input type="checkbox" checked={consentAgree} onChange={e => setConsentAgree(e.target.checked)} className="mt-0.5 h-4 w-4 accent-primary" />
+              <span className="text-muted-foreground">I have read and agree to the rules and regulations set by the seller.</span>
+            </label>
+
+            <div className="space-y-1.5">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Signature (type full name)</p>
+              <input type="text" value={consentSignName} onChange={e => setConsentSignName(e.target.value)} placeholder="Type your full legal name"
+                className="w-full rounded-xl border border-border bg-muted/60 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/30" />
+            </div>
+
+            <div className="flex gap-3 pt-1">
+              <button onClick={() => setShowConsent(false)} disabled={consentSubmitting}
+                className="flex-1 rounded-xl border border-border py-2.5 text-sm font-medium hover:bg-muted transition-colors">
+                Cancel
+              </button>
+              <button onClick={handleConsentSubmit} disabled={consentSubmitting}
+                className="flex-1 rounded-xl gradient-gold py-2.5 text-sm font-bold text-primary-foreground transition-all hover:scale-[1.02] shadow-sm disabled:opacity-70 disabled:hover:scale-100">
+                {consentSubmitting ? 'Signing...' : 'Sign & Submit'}
               </button>
             </div>
           </div>

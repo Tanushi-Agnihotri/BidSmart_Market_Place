@@ -53,6 +53,10 @@ export interface Auction {
   watchlistCount: number;
   verificationStatus?: 'PENDING' | 'VERIFIED' | 'REJECTED';
   verificationReason?: string | null;
+  rulesAndRegulations?: string | null;
+  consentRequired?: boolean;
+  consentStartTime?: string | null;
+  consentEndTime?: string | null;
 }
 
 export interface Bid {

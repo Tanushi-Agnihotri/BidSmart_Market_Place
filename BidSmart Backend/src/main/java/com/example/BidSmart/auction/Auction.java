@@ -80,6 +80,18 @@ public class Auction {
     @Column(name = "verified_by")
     private UUID verifiedBy;
 
+    @Column(name = "rules_and_regulations", columnDefinition = "TEXT")
+    private String rulesAndRegulations;
+
+    @Column(name = "consent_start_time")
+    private OffsetDateTime consentStartTime;
+
+    @Column(name = "consent_end_time")
+    private OffsetDateTime consentEndTime;
+
+    @Column(name = "consent_required", nullable = false)
+    private boolean consentRequired = false;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "seller_id", nullable = false)
     private User seller;
@@ -247,6 +259,18 @@ public class Auction {
     public void setVerifiedBy(UUID verifiedBy) {
         this.verifiedBy = verifiedBy;
     }
+
+    public String getRulesAndRegulations() { return rulesAndRegulations; }
+    public void setRulesAndRegulations(String rulesAndRegulations) { this.rulesAndRegulations = rulesAndRegulations; }
+
+    public OffsetDateTime getConsentStartTime() { return consentStartTime; }
+    public void setConsentStartTime(OffsetDateTime consentStartTime) { this.consentStartTime = consentStartTime; }
+
+    public OffsetDateTime getConsentEndTime() { return consentEndTime; }
+    public void setConsentEndTime(OffsetDateTime consentEndTime) { this.consentEndTime = consentEndTime; }
+
+    public boolean isConsentRequired() { return consentRequired; }
+    public void setConsentRequired(boolean consentRequired) { this.consentRequired = consentRequired; }
 
     public OffsetDateTime getCreatedAt() {
         return createdAt;

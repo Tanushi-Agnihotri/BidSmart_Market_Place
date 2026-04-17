@@ -14,6 +14,7 @@ import com.example.BidSmart.auction.AuctionRepository;
 import com.example.BidSmart.auction.AuctionStatus;
 import com.example.BidSmart.bid.dto.BidResponse;
 import com.example.BidSmart.bid.dto.PlaceBidRequest;
+import com.example.BidSmart.consent.AuctionConsentRepository;
 import com.example.BidSmart.exception.ApiException;
 import com.example.BidSmart.notification.NotificationService;
 import com.example.BidSmart.notification.NotificationType;
@@ -26,11 +27,15 @@ public class BidService {
     private final BidRepository bidRepository;
     private final AuctionRepository auctionRepository;
     private final NotificationService notificationService;
+    private final AuctionConsentRepository consentRepository;
 
-    public BidService(BidRepository bidRepository, AuctionRepository auctionRepository, NotificationService notificationService) {
+    public BidService(BidRepository bidRepository, AuctionRepository auctionRepository,
+                      NotificationService notificationService,
+                      AuctionConsentRepository consentRepository) {
         this.bidRepository = bidRepository;
         this.auctionRepository = auctionRepository;
         this.notificationService = notificationService;
+        this.consentRepository = consentRepository;
     }
 
     @Transactional
@@ -56,6 +61,12 @@ public class BidService {
         // Seller cannot bid on their own auction
         if (auction.getSeller().getId().equals(bidder.getId())) {
             throw new ApiException(HttpStatus.FORBIDDEN, "You cannot bid on your own auction");
+        }
+
+        // Require signed consent if auction mandates it
+        if (auction.isConsentRequired()
+            && !consentRepository.existsByAuctionIdAndUserId(auction.getId(), bidder.getId())) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "You must sign the consent form before bidding");
         }
 
         // Calculate minimum bid

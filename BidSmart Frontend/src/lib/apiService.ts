@@ -78,9 +78,36 @@ export interface ApiAuction {
   sellerName: string;
   createdAt: string;
   images: string[];
+  rulesAndRegulations?: string | null;
+  consentRequired?: boolean;
+  consentStartTime?: string | null;
+  consentEndTime?: string | null;
 }
 
 export type VerificationStatus = 'PENDING' | 'VERIFIED' | 'REJECTED';
+
+export interface ApiConsent {
+  id: string;
+  auctionId: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  userVerified: boolean;
+  signatureName: string;
+  signatureData: string | null;
+  signedAt: string;
+  documentPath: string | null;
+}
+
+export interface ApiConsentStatus {
+  required: boolean;
+  signed: boolean;
+  windowOpen: boolean;
+  consentStartTime: string | null;
+  consentEndTime: string | null;
+  rulesAndRegulations: string | null;
+  consent: ApiConsent | null;
+}
 
 export interface ApiAdminSeller {
   id: string;
@@ -188,6 +215,10 @@ export function toFrontendAuction(a: ApiAuction): Auction {
     watchlistCount: a.watchlistCount,
     verificationStatus: a.verificationStatus,
     verificationReason: a.verificationReason,
+    rulesAndRegulations: a.rulesAndRegulations ?? null,
+    consentRequired: a.consentRequired ?? false,
+    consentStartTime: a.consentStartTime ?? null,
+    consentEndTime: a.consentEndTime ?? null,
   };
 }
 
@@ -224,7 +255,11 @@ export const auctionApi = {
     basePrice: number;
     bidIncrement: number;
     durationHours: number;
-    scheduledStartTime?: string; // ISO 8601 datetime, null = start immediately
+    scheduledStartTime?: string;
+    rulesAndRegulations?: string;
+    consentRequired?: boolean;
+    consentStartTime?: string;
+    consentEndTime?: string;
   }) => request<ApiAuction>('/api/auctions', { method: 'POST', body: JSON.stringify(data) }),
   update: (id: string, data: {
     title?: string;
@@ -233,8 +268,45 @@ export const auctionApi = {
     condition?: string;
     basePrice?: number;
     bidIncrement?: number;
+    rulesAndRegulations?: string;
+    consentRequired?: boolean;
+    consentStartTime?: string;
+    consentEndTime?: string;
   }) => request<ApiAuction>(`/api/auctions/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   delete: (id: string) => request<void>(`/api/auctions/${id}`, { method: 'DELETE' }),
+};
+
+// Consents
+export const consentApi = {
+  getStatus: (auctionId: string) =>
+    request<ApiConsentStatus>(`/api/consents/auction/${auctionId}/status`),
+  sign: (auctionId: string, signatureName: string, signatureData?: string) =>
+    request<ApiConsent>('/api/consents', {
+      method: 'POST',
+      body: JSON.stringify({ auctionId, signatureName, signatureData }),
+    }),
+  listByAuction: (auctionId: string) =>
+    request<ApiConsent[]>(`/api/consents/auction/${auctionId}`),
+  listMine: () => request<ApiConsent[]>('/api/consents/my'),
+  openDocument: async (auctionId: string, userId: string): Promise<void> => {
+    const token = getToken();
+    const res = await fetch(apiUrl(`/api/consents/${auctionId}/${userId}/document`), {
+      headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+    });
+    if (!res.ok) {
+      let msg = `Unable to load consent document (${res.status})`;
+      try {
+        const body = await res.json();
+        if (body?.message) msg = body.message;
+      } catch { /* not json */ }
+      throw new ApiError(res.status, msg);
+    }
+    const html = await res.text();
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank', 'noopener,noreferrer');
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  },
 };
 
 // Bids

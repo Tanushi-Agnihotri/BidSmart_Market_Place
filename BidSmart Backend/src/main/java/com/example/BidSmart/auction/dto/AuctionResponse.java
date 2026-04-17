@@ -30,7 +30,11 @@ public record AuctionResponse(
     UUID sellerId,
     String sellerName,
     OffsetDateTime createdAt,
-    List<String> images
+    List<String> images,
+    String rulesAndRegulations,
+    boolean consentRequired,
+    OffsetDateTime consentStartTime,
+    OffsetDateTime consentEndTime
 ) {
     public static AuctionResponse from(Auction auction) {
         return from(auction, List.of());
@@ -40,7 +44,6 @@ public record AuctionResponse(
         List<String> imageUrls = auctionImages.stream()
             .map(img -> {
                 String fp = img.getFilePath();
-                // Cloudinary images already have a full HTTPS URL
                 return (fp != null && fp.startsWith("http")) ? fp : "/api/images/" + fp;
             })
             .toList();
@@ -64,7 +67,11 @@ public record AuctionResponse(
             auction.getSeller().getId(),
             auction.getSeller().getFullName(),
             auction.getCreatedAt(),
-            imageUrls
+            imageUrls,
+            auction.getRulesAndRegulations(),
+            auction.isConsentRequired(),
+            auction.getConsentStartTime(),
+            auction.getConsentEndTime()
         );
     }
 }

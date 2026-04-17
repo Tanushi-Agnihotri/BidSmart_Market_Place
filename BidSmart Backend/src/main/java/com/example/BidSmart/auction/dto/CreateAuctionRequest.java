@@ -1,10 +1,12 @@
 package com.example.BidSmart.auction.dto;
 
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 
 import com.example.BidSmart.auction.AuctionCondition;
 
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -35,6 +37,14 @@ public record CreateAuctionRequest(
 
     @NotNull(message = "Duration in hours is required")
     @Min(value = 1, message = "Duration must be at least 1 hour")
-    Integer durationHours
+    @Max(value = 24, message = "Duration must be at most 24 hours")
+    Integer durationHours,
+
+    @Size(max = 10000, message = "Rules must be at most 10000 characters")
+    String rulesAndRegulations,
+
+    Boolean consentRequired,
+    OffsetDateTime consentStartTime,
+    OffsetDateTime consentEndTime
 ) {
 }

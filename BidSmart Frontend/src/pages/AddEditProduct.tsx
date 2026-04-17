@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   MdOutlineArrowBack as ArrowLeft,
@@ -35,14 +35,13 @@ import SellerAccessGate from '@/components/shared/SellerAccessGate';
 const conditions = ['New', 'Like New', 'Excellent', 'Very Good', 'Good', 'Fair', 'Restored'];
 const presetDurations = [
   { label: '1 Hr', hours: 1 },
+  { label: '2 Hrs', hours: 2 },
+  { label: '4 Hrs', hours: 4 },
   { label: '6 Hrs', hours: 6 },
+  { label: '8 Hrs', hours: 8 },
   { label: '12 Hrs', hours: 12 },
-  { label: '1 Day', hours: 24 },
-  { label: '3 Days', hours: 72 },
-  { label: '5 Days', hours: 120 },
-  { label: '7 Days', hours: 168 },
-  { label: '14 Days', hours: 336 },
-  { label: '30 Days', hours: 720 },
+  { label: '18 Hrs', hours: 18 },
+  { label: '24 Hrs', hours: 24 },
 ];
 
 type PendingImage = { file: File; preview: string };
@@ -77,7 +76,7 @@ const AddEditProduct = () => {
   const [basePrice, setBasePrice] = useState(existing?.basePrice?.toString() || '');
   const [bidIncrement, setBidIncrement] = useState(existing?.bidIncrement?.toString() || '');
   const [durationMode, setDurationMode] = useState<'preset' | 'custom'>('preset');
-  const [presetDuration, setPresetDuration] = useState('168');
+  const [presetDuration, setPresetDuration] = useState('24');
   const [customDurationDays, setCustomDurationDays] = useState('');
   const [customDurationHours, setCustomDurationHours] = useState('');
   const [startMode, setStartMode] = useState<'now' | 'scheduled'>('now');
@@ -87,6 +86,25 @@ const AddEditProduct = () => {
   const [pendingImages, setPendingImages] = useState<PendingImage[]>([]);
   const [coverIndex, setCoverIndex] = useState(0);
   const [submitting, setSubmitting] = useState(false);
+  const [consentRequired, setConsentRequired] = useState<boolean>(existing?.consentRequired ?? false);
+  const [rulesAndRegulations, setRulesAndRegulations] = useState<string>(existing?.rulesAndRegulations ?? '');
+  const [consentStart, setConsentStart] = useState<string>(existing?.consentStartTime ? existing.consentStartTime.slice(0, 16) : '');
+  const [consentEnd, setConsentEnd] = useState<string>(existing?.consentEndTime ? existing.consentEndTime.slice(0, 16) : '');
+
+  useEffect(() => {
+    if (!existing) return;
+    setTitle(existing.title || '');
+    setCategory(existing.category || '');
+    setCondition(existing.condition || '');
+    setDescription(existing.description || '');
+    setBasePrice(existing.basePrice?.toString() || '');
+    setBidIncrement(existing.bidIncrement?.toString() || '');
+    setExistingImages(existing.images || []);
+    setConsentRequired(existing.consentRequired ?? false);
+    setRulesAndRegulations(existing.rulesAndRegulations ?? '');
+    setConsentStart(existing.consentStartTime ? existing.consentStartTime.slice(0, 16) : '');
+    setConsentEnd(existing.consentEndTime ? existing.consentEndTime.slice(0, 16) : '');
+  }, [existing?.id]);
 
   const totalImages = existingImages.length + pendingImages.length;
 
@@ -116,7 +134,15 @@ const AddEditProduct = () => {
     }
     const durationHours = getDurationHours();
     if (durationHours < 1) { toast.error('Auction duration must be at least 1 hour.'); return; }
-    if (durationHours > 720) { toast.error('Auction duration cannot exceed 30 days.'); return; }
+    if (durationHours > 24) { toast.error('Auction duration cannot exceed 24 hours.'); return; }
+    if (consentRequired) {
+      if (!rulesAndRegulations.trim()) { toast.error('Rules and regulations are required when consent is enabled.'); return; }
+      if (!consentStart || !consentEnd) { toast.error('Please set consent start and end times.'); return; }
+      const cs = new Date(consentStart).getTime();
+      const ce = new Date(consentEnd).getTime();
+      if (ce <= cs) { toast.error('Consent end must be after consent start.'); return; }
+      if (cs <= Date.now()) { toast.error('Consent start must be in the future.'); return; }
+    }
     if (startMode === 'scheduled' && !scheduledDateStr) { toast.error('Please select a start date.'); return; }
     if (startMode === 'scheduled') {
       const scheduled = new Date(`${scheduledDateStr}T${scheduledTimeStr}`);
@@ -127,12 +153,20 @@ const AddEditProduct = () => {
     setSubmitting(true);
     try {
       let auctionId = id;
+      const consentPayload = consentRequired ? {
+        rulesAndRegulations: rulesAndRegulations.trim(),
+        consentRequired: true,
+        consentStartTime: new Date(consentStart).toISOString(),
+        consentEndTime: new Date(consentEnd).toISOString(),
+      } : { consentRequired: false };
+
       if (isEdit && id) {
-        await auctionApi.update(id, { title, category, description, condition, basePrice: parseFloat(basePrice), bidIncrement: parseFloat(bidIncrement) });
+        await auctionApi.update(id, { title, category, description, condition, basePrice: parseFloat(basePrice), bidIncrement: parseFloat(bidIncrement), ...consentPayload });
       } else {
         const createData: Parameters<typeof auctionApi.create>[0] = {
           title, category, description, condition,
           basePrice: parseFloat(basePrice), bidIncrement: parseFloat(bidIncrement), durationHours,
+          ...consentPayload,
         };
         if (startMode === 'scheduled' && scheduledDateStr) {
           createData.scheduledStartTime = new Date(`${scheduledDateStr}T${scheduledTimeStr}`).toISOString();
@@ -550,14 +584,10 @@ const AddEditProduct = () => {
                           ))}
                         </div>
                       ) : (
-                        <div className="flex gap-3 animate-fade-in">
-                          <div className="flex-1 space-y-1.5">
-                            <Label className="text-xs text-muted-foreground">Days</Label>
-                            <Input type="number" min="0" max="30" value={customDurationDays} onChange={e => setCustomDurationDays(e.target.value)} placeholder="0" className="h-10 font-mono" />
-                          </div>
-                          <div className="flex-1 space-y-1.5">
-                            <Label className="text-xs text-muted-foreground">Hours</Label>
-                            <Input type="number" min="0" max="23" value={customDurationHours} onChange={e => setCustomDurationHours(e.target.value)} placeholder="0" className="h-10 font-mono" />
+                        <div className="animate-fade-in">
+                          <div className="space-y-1.5">
+                            <Label className="text-xs text-muted-foreground">Hours (1–24)</Label>
+                            <Input type="number" min="1" max="24" value={customDurationHours} onChange={e => { setCustomDurationDays('0'); setCustomDurationHours(e.target.value); }} placeholder="1" className="h-10 font-mono" />
                           </div>
                         </div>
                       )}
@@ -573,6 +603,43 @@ const AddEditProduct = () => {
                   </div>
                 </div>
               )}
+
+              {/* ── Buyer Consent ── */}
+              <div className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-sm animate-float-up delay-450">
+                <div className="p-5 sm:p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h2 className="font-semibold text-base">Buyer Consent Form</h2>
+                      <p className="text-xs text-muted-foreground">Require buyers to sign before they can bid</p>
+                    </div>
+                    <label className="inline-flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" checked={consentRequired} onChange={e => setConsentRequired(e.target.checked)} className="h-4 w-4 accent-primary" />
+                      <span className="text-sm font-medium">{consentRequired ? 'Enabled' : 'Disabled'}</span>
+                    </label>
+                  </div>
+                  {consentRequired && (
+                    <div className="space-y-4 animate-fade-in">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Rules &amp; Regulations *</Label>
+                        <textarea value={rulesAndRegulations} onChange={e => setRulesAndRegulations(e.target.value)} rows={6} maxLength={10000}
+                          placeholder="E.g. All bids are final. Payment within 48 hours. Winner is responsible for shipping costs..."
+                          className="w-full rounded-xl border border-border bg-muted/40 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/30" />
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Consent Window Start *</Label>
+                          <Input type="datetime-local" value={consentStart} onChange={e => setConsentStart(e.target.value)} className="h-10" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Consent Window End *</Label>
+                          <Input type="datetime-local" value={consentEnd} onChange={e => setConsentEnd(e.target.value)} className="h-10" />
+                        </div>
+                      </div>
+                      <p className="text-xs text-muted-foreground">Consent window and auction duration are independent. Auction duration: 1–24 hours.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
 
               {/* ── Actions ── */}
               <div className="flex gap-3 justify-end pt-2 animate-float-up delay-500">

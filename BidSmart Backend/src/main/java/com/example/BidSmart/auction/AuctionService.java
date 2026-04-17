@@ -89,7 +89,22 @@ public class AuctionService {
         }
 
         OffsetDateTime now = OffsetDateTime.now();
-        OffsetDateTime endTime = now.plusHours(request.durationHours());
+        boolean consentRequired = Boolean.TRUE.equals(request.consentRequired());
+
+        if (consentRequired) {
+            if (request.consentStartTime() == null || request.consentEndTime() == null) {
+                throw new ApiException(HttpStatus.BAD_REQUEST, "Consent window is required when consent is enabled");
+            }
+            if (!request.consentEndTime().isAfter(request.consentStartTime())) {
+                throw new ApiException(HttpStatus.BAD_REQUEST, "Consent end must be after consent start");
+            }
+        }
+
+        if (request.durationHours() < 1 || request.durationHours() > 24) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Auction duration must be between 1 and 24 hours");
+        }
+        OffsetDateTime auctionStart = now;
+        OffsetDateTime endTime = auctionStart.plusHours(request.durationHours());
 
         Auction auction = new Auction();
         auction.setTitle(request.title().trim());
@@ -98,11 +113,15 @@ public class AuctionService {
         auction.setItemCondition(request.condition());
         auction.setBasePrice(request.basePrice());
         auction.setBidIncrement(request.bidIncrement());
-        auction.setStartTime(now);
+        auction.setStartTime(auctionStart);
         auction.setEndTime(endTime);
         auction.setStatus(AuctionStatus.ACTIVE);
         auction.setVerificationStatus(VerificationStatus.PENDING);
         auction.setSeller(seller);
+        auction.setRulesAndRegulations(request.rulesAndRegulations());
+        auction.setConsentRequired(consentRequired);
+        auction.setConsentStartTime(request.consentStartTime());
+        auction.setConsentEndTime(request.consentEndTime());
 
         Auction saved = auctionRepository.save(auction);
         return toResponseWithImages(saved);
@@ -130,6 +149,10 @@ public class AuctionService {
         if (request.condition() != null) auction.setItemCondition(request.condition());
         if (request.basePrice() != null) auction.setBasePrice(request.basePrice());
         if (request.bidIncrement() != null) auction.setBidIncrement(request.bidIncrement());
+        if (request.rulesAndRegulations() != null) auction.setRulesAndRegulations(request.rulesAndRegulations());
+        if (request.consentRequired() != null) auction.setConsentRequired(request.consentRequired());
+        if (request.consentStartTime() != null) auction.setConsentStartTime(request.consentStartTime());
+        if (request.consentEndTime() != null) auction.setConsentEndTime(request.consentEndTime());
 
         Auction saved = auctionRepository.save(auction);
         return toResponseWithImages(saved);
