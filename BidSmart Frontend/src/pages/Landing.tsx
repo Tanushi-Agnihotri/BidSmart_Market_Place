@@ -44,6 +44,7 @@ const Landing = () => {
           <img src={heroImg} alt="Luxury auction" className="h-full w-full object-cover animate-hero-zoom" />
           <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/70 to-black/30" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
+          <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background to-transparent" />
         </div>
         {/* Particles */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">

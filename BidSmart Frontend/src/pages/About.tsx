@@ -7,7 +7,7 @@ import {
   MdOutlineGavel, MdOutlineTrendingUp, MdOutlineStar,
 } from 'react-icons/md';
 import { statsApi, type ApiPublicStats } from '@/lib/apiService';
-import heroImg from '@/assets/hero-auction.jpg';
+import heroImg from '@/assets/About.png';
 import artImg from '@/assets/auction-art.jpg';
 import jewelryImg from '@/assets/auction-jewelry.jpg';
 import watchImg from '@/assets/auction-watch.jpg';
@@ -29,8 +29,8 @@ const About = () => {
     <section className="relative flex items-center overflow-hidden min-h-screen">
       <div className="absolute inset-0">
         <img src={heroImg} alt="" className="w-full h-full object-cover animate-hero-zoom" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/70 to-black/30" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-black/20" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/10" />
       </div>
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {Array.from({ length: 20 }).map((_, i) => (

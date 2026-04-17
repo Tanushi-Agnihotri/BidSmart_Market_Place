@@ -15,7 +15,7 @@ import AuctionCard from '@/components/shared/AuctionCard';
 import { categories } from '@/data/mockData';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import heroImg from '@/assets/hero-auction.jpg';
+import heroImg from '@/assets/browse.png';
 
 const ITEMS_PER_PAGE = 12;
 
@@ -46,7 +46,14 @@ const BrowseAuctions = () => {
 
   const filtered = useMemo(() => {
     let result = auctions;
-    if (search) result = result.filter(a => a.title.toLowerCase().includes(search.toLowerCase()));
+    if (search) {
+      const q = search.toLowerCase();
+      result = result.filter(a =>
+        a.title.toLowerCase().includes(q) ||
+        a.category.toLowerCase().includes(q) ||
+        (a.sellerName && a.sellerName.toLowerCase().includes(q))
+      );
+    }
     if (selectedCategory) result = result.filter(a => a.category === selectedCategory);
     if (selectedStatus) result = result.filter(a => a.status === selectedStatus);
     if (sortBy === 'ending-soon') result = [...result].sort((a, b) => new Date(a.endTime).getTime() - new Date(b.endTime).getTime());
@@ -76,101 +83,120 @@ const BrowseAuctions = () => {
   return (
     <div className="min-h-screen animate-fade-in">
       {/* Hero header with background */}
-      <section className="relative pt-24 pb-10 overflow-hidden">
+      <section className="relative min-h-screen flex flex-col justify-end overflow-hidden">
         <div className="absolute inset-0">
-          <img src={heroImg} alt="" className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/65 to-background" />
-          <div className="absolute inset-0 bg-black/25" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,hsl(var(--primary)/0.25),transparent_60%)]" />
+          <img src={heroImg} alt="" className="w-full h-full object-cover object-center" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-black/70" />
+          <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background to-transparent" />
         </div>
 
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="mb-6 animate-float-up max-w-3xl">
-            <span className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-white/90 mb-4">
-              <Bolt className="h-3.5 w-3.5 text-primary" /> Live Marketplace
-            </span>
-            <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight">
-              Explore <span className="bg-gradient-to-r from-primary via-primary/80 to-primary bg-clip-text text-transparent">Auctions</span>
+        {/* Badge — floating above the auctioneer */}
+        <div className="absolute top-[18%] left-1/2 -translate-x-1/2 z-10">
+          <span className="inline-flex items-center gap-2 rounded-full bg-black/30 backdrop-blur-md border border-primary/40 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
+            <Bolt className="h-3.5 w-3.5 text-primary" /> Live Marketplace
+          </span>
+        </div>
+
+        <div className="container mx-auto px-4 relative z-10 pb-16 text-center">
+          <div className="mb-8 animate-float-up max-w-4xl mx-auto">
+            <h1 className="font-display text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight drop-shadow-2xl">
+              Explore <span className="bg-gradient-to-r from-primary via-yellow-300 to-primary bg-clip-text text-transparent">Auctions</span>
             </h1>
-            <p className="text-base md:text-lg text-white/75 mt-2 max-w-xl">
+            <p className="text-lg md:text-xl text-white/80 mt-4 max-w-xl mx-auto drop-shadow-md">
               Discover extraordinary items from verified sellers — bid, watch, and win pieces you'll treasure.
             </p>
 
-            {/* Mini stats — chip style */}
-            <div className="flex flex-wrap items-center gap-2 mt-6">
-              <span className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-md border border-white/15 px-3 py-1.5 text-sm text-white/90">
-                <Gavel className="h-4 w-4 text-primary" />
-                <span className="font-mono font-bold text-white">{globalStats.total}</span>
-                <span className="text-white/70">total</span>
-              </span>
-              <span className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-md border border-white/15 px-3 py-1.5 text-sm text-white/90">
-                {globalStats.live > 0 ? (
-                  <span className="relative flex h-2 w-2">
-                    <span className="absolute inline-flex h-full w-full rounded-full bg-success opacity-75 animate-ping" />
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-success" />
-                  </span>
-                ) : (
-                  <span className="h-2 w-2 rounded-full bg-white/30" />
-                )}
-                <span className="font-mono font-bold text-white">{globalStats.live}</span>
-                <span className="text-white/70">live</span>
-              </span>
-              <span className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-md border border-white/15 px-3 py-1.5 text-sm text-white/90">
-                <Timer className="h-4 w-4 text-warning" />
-                <span className="font-mono font-bold text-white">{globalStats.endingSoon}</span>
-                <span className="text-white/70">ending soon</span>
-              </span>
-            </div>
           </div>
 
-          {/* Search & Filters */}
-          <div className="flex flex-col md:flex-row gap-3 animate-float-up delay-200" style={{ animationFillMode: 'both' }}>
-            <div className="relative flex-1">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/60" />
-              <input
-                type="text"
-                placeholder="Search by title, category, or seller..."
-                value={search}
-                onChange={e => handleFilterChange(setSearch, e.target.value)}
-                className="w-full rounded-xl border border-white/25 bg-black/40 backdrop-blur-xl pl-10 pr-10 py-3 text-base text-white placeholder:text-white/70 shadow-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 focus:bg-black/50 transition-all"
-              />
-              {search && (
-                <button
-                  onClick={() => handleFilterChange(setSearch, '')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/60 hover:text-white"
-                  aria-label="Clear search"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
+          {/* Glass card wrapping stats + search */}
+          <div className="max-w-3xl mx-auto animate-float-up delay-200 rounded-2xl border border-white/20 bg-black/40 backdrop-blur-xl shadow-2xl px-6 py-5" style={{ animationFillMode: 'both' }}>
+
+            {/* Stats row */}
+            <div className="flex flex-wrap items-center justify-center gap-4 mb-5">
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 border border-primary/40">
+                  <Gavel className="h-4 w-4 text-primary" />
+                </div>
+                <div className="text-left">
+                  <p className="font-mono font-bold text-white text-sm leading-none">{globalStats.total}</p>
+                  <p className="text-[10px] text-white/50 uppercase tracking-wider">Total</p>
+                </div>
+              </div>
+              <div className="w-px h-8 bg-white/15" />
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-500/20 border border-green-500/40">
+                  {globalStats.live > 0 ? (
+                    <span className="relative flex h-3 w-3">
+                      <span className="absolute inline-flex h-full w-full rounded-full bg-success opacity-75 animate-ping" />
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-success" />
+                    </span>
+                  ) : (
+                    <span className="h-3 w-3 rounded-full bg-white/20" />
+                  )}
+                </div>
+                <div className="text-left">
+                  <p className="font-mono font-bold text-white text-sm leading-none">{globalStats.live}</p>
+                  <p className="text-[10px] text-white/50 uppercase tracking-wider">Live</p>
+                </div>
+              </div>
+              <div className="w-px h-8 bg-white/15" />
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-yellow-500/20 border border-yellow-500/40">
+                  <Timer className="h-4 w-4 text-warning" />
+                </div>
+                <div className="text-left">
+                  <p className="font-mono font-bold text-white text-sm leading-none">{globalStats.endingSoon}</p>
+                  <p className="text-[10px] text-white/50 uppercase tracking-wider">Ending Soon</p>
+                </div>
+              </div>
             </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className={cn(
-                  "flex items-center gap-2 rounded-xl border px-4 py-3 text-base font-medium transition-all backdrop-blur-xl shadow-lg",
-                  showFilters
-                    ? "border-primary/60 bg-primary/40 text-white"
-                    : "border-white/25 bg-black/40 text-white hover:bg-black/55"
+
+            {/* Divider */}
+            <div className="h-px w-full bg-white/10 mb-4" />
+
+            {/* Search & Filters */}
+            <div className="flex flex-col md:flex-row gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50" />
+                <input
+                  type="text"
+                  placeholder="Search by title, category, or seller..."
+                  value={search}
+                  onChange={e => handleFilterChange(setSearch, e.target.value)}
+                  className="w-full rounded-xl border border-white/15 bg-white/10 pl-10 pr-10 py-2.5 text-sm text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/40 focus:bg-white/15 transition-all"
+                />
+                {search && (
+                  <button onClick={() => handleFilterChange(setSearch, '')} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white" aria-label="Clear search">
+                    <X className="h-4 w-4" />
+                  </button>
                 )}
-              >
-                <SlidersHorizontal className="h-4 w-4" /> Filters
-                {selectedStatus && (
-                  <span className="rounded-full bg-primary text-primary-foreground text-xs font-mono px-1.5 min-w-[20px] text-center">
-                    1
-                  </span>
-                )}
-              </button>
-              <select
-                value={sortBy}
-                onChange={e => handleFilterChange(setSortBy, e.target.value)}
-                className="rounded-xl border border-white/25 bg-black/40 backdrop-blur-xl shadow-lg px-3 py-3 text-base text-white focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer"
-              >
-                <option value="ending-soon" className="text-foreground bg-card">Ending Soon</option>
-                <option value="price-high" className="text-foreground bg-card">Price: High to Low</option>
-                <option value="price-low" className="text-foreground bg-card">Price: Low to High</option>
-                <option value="most-bids" className="text-foreground bg-card">Most Bids</option>
-              </select>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowFilters(!showFilters)}
+                  className={cn(
+                    "flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition-all",
+                    showFilters
+                      ? "border-primary/60 bg-primary/30 text-primary"
+                      : "border-white/15 bg-white/10 text-white hover:bg-white/15"
+                  )}
+                >
+                  <SlidersHorizontal className="h-4 w-4" /> Filters
+                  {selectedStatus && (
+                    <span className="rounded-full bg-primary text-primary-foreground text-xs font-mono px-1.5 min-w-[18px] text-center">1</span>
+                  )}
+                </button>
+                <select
+                  value={sortBy}
+                  onChange={e => handleFilterChange(setSortBy, e.target.value)}
+                  className="rounded-xl border border-white/15 bg-white/10 px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer"
+                >
+                  <option value="ending-soon" className="text-foreground bg-card">Ending Soon</option>
+                  <option value="price-high" className="text-foreground bg-card">Price: High to Low</option>
+                  <option value="price-low" className="text-foreground bg-card">Price: Low to High</option>
+                  <option value="most-bids" className="text-foreground bg-card">Most Bids</option>
+                </select>
+              </div>
             </div>
           </div>
         </div>
