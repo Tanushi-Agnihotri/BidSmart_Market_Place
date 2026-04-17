@@ -436,8 +436,6 @@ export interface ApiVerificationUploadResponse {
   fileName: string;
   url: string;
   fileSize: number;
-  verificationStatus: 'PENDING' | 'VERIFIED' | 'REJECTED';
-  verificationReason: string | null;
 }
 
 export const verificationDocApi = {

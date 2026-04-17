@@ -28,16 +28,13 @@ public class VerificationDocumentController {
     private final AuctionRepository auctionRepository;
     private final AuctionVerificationDocumentRepository docRepository;
     private final DocumentStorageService storageService;
-    private final AutoVerificationService autoVerificationService;
 
     public VerificationDocumentController(AuctionRepository auctionRepository,
                                           AuctionVerificationDocumentRepository docRepository,
-                                          DocumentStorageService storageService,
-                                          AutoVerificationService autoVerificationService) {
+                                          DocumentStorageService storageService) {
         this.auctionRepository = auctionRepository;
         this.docRepository = docRepository;
         this.storageService = storageService;
-        this.autoVerificationService = autoVerificationService;
     }
 
     @PostMapping
@@ -74,11 +71,8 @@ public class VerificationDocumentController {
         doc.setContentType(file.getContentType() == null ? "application/octet-stream" : file.getContentType());
         docRepository.save(doc);
 
-        AutoVerificationService.Result result = autoVerificationService.evaluate(auction);
-
         return ResponseEntity.status(HttpStatus.CREATED).body(
-            new UploadResponse(doc.getId(), doc.getDocType(), doc.getFileName(), fileUrl(doc), doc.getFileSize(),
-                               result.status().name(), result.reason())
+            new UploadResponse(doc.getId(), doc.getDocType(), doc.getFileName(), fileUrl(doc), doc.getFileSize())
         );
     }
 
@@ -105,8 +99,7 @@ public class VerificationDocumentController {
         return (fp != null && fp.startsWith("http")) ? fp : "/api/images/" + fp;
     }
 
-    public record UploadResponse(UUID id, String docType, String fileName, String url, long fileSize,
-                                 String verificationStatus, String verificationReason) {}
+    public record UploadResponse(UUID id, String docType, String fileName, String url, long fileSize) {}
 
     public record DocumentResponse(UUID id, String docType, String fileName, String url, long fileSize,
                                    String contentType, String uploadedAt) {}

@@ -217,23 +217,16 @@ const AddEditProduct = () => {
         if (uploaded > 0) toast.success(`${uploaded} image${uploaded > 1 ? 's' : ''} uploaded!`);
         if (failed > 0) toast.error(`${failed} image${failed > 1 ? 's' : ''} failed to upload.`);
       }
-      let lastVerification: { status: string; reason: string | null } | null = null;
       if (auctionId && pendingDocs.length > 0) {
         for (const pd of pendingDocs) {
           try {
-            const resp = await verificationDocApi.upload(auctionId, pd.file, pd.docType);
-            lastVerification = { status: resp.verificationStatus, reason: resp.verificationReason };
+            await verificationDocApi.upload(auctionId, pd.file, pd.docType);
           } catch (e) {
             toast.error(`Document "${pd.file.name}" failed: ${e instanceof ApiError ? e.message : 'upload error'}`);
           }
         }
       }
       toast.success(isEdit ? 'Product updated!' : startMode === 'scheduled' ? 'Auction scheduled!' : 'Product listed!');
-      if (lastVerification) {
-        if (lastVerification.status === 'VERIFIED') toast.success(`Auto-verified: ${lastVerification.reason ?? 'passed all checks'}`);
-        else if (lastVerification.status === 'REJECTED') toast.error(`Auto-rejected: ${lastVerification.reason ?? 'failed validation'}`);
-        else toast.info(`Under review: ${lastVerification.reason ?? 'admin verification pending'}`);
-      }
       await refreshAuctions();
       navigate('/seller/products');
     } catch (err) {
