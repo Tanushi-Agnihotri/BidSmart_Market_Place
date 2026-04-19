@@ -786,12 +786,7 @@ const AddEditProduct = () => {
                           </div>
                           <div className="space-y-1.5">
                             <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1"><ClockIcon className="h-3 w-3" /> Time *</Label>
-                            <Select value={consentStartTime} onValueChange={setConsentStartTime}>
-                              <SelectTrigger className="font-mono h-10"><SelectValue /></SelectTrigger>
-                              <SelectContent className="max-h-52">
-                                {timeSlots.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
-                              </SelectContent>
-                            </Select>
+                            <Input type="time" value={consentStartTime} onChange={e => setConsentStartTime(e.target.value || '12:00')} className="font-mono h-10" />
                           </div>
                         </div>
                       </div>
@@ -804,12 +799,7 @@ const AddEditProduct = () => {
                           </div>
                           <div className="space-y-1.5">
                             <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1"><ClockIcon className="h-3 w-3" /> Time *</Label>
-                            <Select value={consentEndTime} onValueChange={setConsentEndTime}>
-                              <SelectTrigger className="font-mono h-10"><SelectValue /></SelectTrigger>
-                              <SelectContent className="max-h-52">
-                                {timeSlots.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
-                              </SelectContent>
-                            </Select>
+                            <Input type="time" value={consentEndTime} onChange={e => setConsentEndTime(e.target.value || '12:00')} className="font-mono h-10" />
                           </div>
                         </div>
                       </div>
