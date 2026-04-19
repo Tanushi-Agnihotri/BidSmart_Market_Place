@@ -22,6 +22,7 @@ import com.example.BidSmart.auction.AuctionStatus;
 import com.example.BidSmart.auction.dto.AuctionResponse;
 import com.example.BidSmart.bid.BidRepository;
 import com.example.BidSmart.exception.ApiException;
+import com.example.BidSmart.notification.NotificationRepository;
 import com.example.BidSmart.notification.NotificationService;
 import com.example.BidSmart.notification.NotificationType;
 import com.example.BidSmart.user.BuyerProfile;
@@ -46,8 +47,9 @@ public class AdminService {
     private final SellerProfileRepository sellerProfileRepository;
     private final BuyerProfileRepository buyerProfileRepository;
     private final NotificationService notificationService;
+    private final NotificationRepository notificationRepository;
 
-    public AdminService(UserRepository userRepository, AuctionRepository auctionRepository, BidRepository bidRepository, AuctionImageRepository auctionImageRepository, WatchlistRepository watchlistRepository, SellerProfileRepository sellerProfileRepository, BuyerProfileRepository buyerProfileRepository, NotificationService notificationService) {
+    public AdminService(UserRepository userRepository, AuctionRepository auctionRepository, BidRepository bidRepository, AuctionImageRepository auctionImageRepository, WatchlistRepository watchlistRepository, SellerProfileRepository sellerProfileRepository, BuyerProfileRepository buyerProfileRepository, NotificationService notificationService, NotificationRepository notificationRepository) {
         this.userRepository = userRepository;
         this.auctionRepository = auctionRepository;
         this.bidRepository = bidRepository;
@@ -56,6 +58,7 @@ public class AdminService {
         this.sellerProfileRepository = sellerProfileRepository;
         this.buyerProfileRepository = buyerProfileRepository;
         this.notificationService = notificationService;
+        this.notificationRepository = notificationRepository;
     }
 
     @Transactional(readOnly = true)
@@ -160,6 +163,8 @@ public class AdminService {
         bidRepository.deleteByBidderId(userId);
         // Delete watchlist entries
         watchlistRepository.deleteByUserId(userId);
+        // Delete notifications
+        notificationRepository.deleteByUserId(userId);
         userRepository.delete(user);
     }
 

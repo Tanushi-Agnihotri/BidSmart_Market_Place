@@ -33,6 +33,35 @@ import { cn } from '@/lib/utils';
 import SellerAccessGate from '@/components/shared/SellerAccessGate';
 
 const conditions = ['New', 'Like New', 'Excellent', 'Very Good', 'Good', 'Fair', 'Restored'];
+
+const RULES_TEMPLATE = `1. Bidding
+   - All bids placed are final and legally binding.
+   - The highest verified bid at auction close wins.
+   - The seller reserves the right to reject bids from unverified buyers.
+
+2. Payment
+   - The winning buyer must complete payment within 48 hours of auction close.
+   - Accepted payment methods: [UPI / Bank Transfer / Other — specify here].
+   - Failure to pay on time may result in forfeiture and account suspension.
+
+3. Shipping & Delivery
+   - Shipping costs are borne by the winning buyer unless stated otherwise.
+   - Item will be dispatched within [X] business days of payment confirmation.
+   - Shipping is available to: [specify regions/countries].
+
+4. Item Condition
+   - The item is sold as described in the listing. Buyer acknowledges reviewing all photos and details before bidding.
+   - Condition: [New / Like New / Good / Fair — match listing].
+
+5. Returns & Refunds
+   - [No returns / Returns accepted within X days — specify your policy].
+   - Refunds (if applicable) will be processed within [X] business days.
+
+6. Disputes
+   - Any disputes will be resolved through BidSmart's support team first.
+   - Both parties agree to act in good faith.
+
+By signing the consent form, the buyer confirms they have read and agreed to all of the above.`;
 const presetDurations = [
   { label: '1 Hr', hours: 1 },
   { label: '2 Hrs', hours: 2 },
@@ -97,8 +126,12 @@ const AddEditProduct = () => {
   const [submitting, setSubmitting] = useState(false);
   const [consentRequired, setConsentRequired] = useState<boolean>(existing?.consentRequired ?? false);
   const [rulesAndRegulations, setRulesAndRegulations] = useState<string>(existing?.rulesAndRegulations ?? '');
-  const [consentStart, setConsentStart] = useState<string>(existing?.consentStartTime ? existing.consentStartTime.slice(0, 16) : '');
-  const [consentEnd, setConsentEnd] = useState<string>(existing?.consentEndTime ? existing.consentEndTime.slice(0, 16) : '');
+  const [consentStartDate, setConsentStartDate] = useState<string>(existing?.consentStartTime ? existing.consentStartTime.slice(0, 10) : '');
+  const [consentStartTime, setConsentStartTime] = useState<string>(existing?.consentStartTime ? existing.consentStartTime.slice(11, 16) : '12:00');
+  const [consentEndDate, setConsentEndDate] = useState<string>(existing?.consentEndTime ? existing.consentEndTime.slice(0, 10) : '');
+  const [consentEndTime, setConsentEndTime] = useState<string>(existing?.consentEndTime ? existing.consentEndTime.slice(11, 16) : '12:00');
+  const consentStart = consentStartDate ? `${consentStartDate}T${consentStartTime}` : '';
+  const consentEnd = consentEndDate ? `${consentEndDate}T${consentEndTime}` : '';
   const [pendingDocs, setPendingDocs] = useState<PendingDoc[]>([]);
   const [selectedDocType, setSelectedDocType] = useState<string>('INVOICE');
 
@@ -113,8 +146,10 @@ const AddEditProduct = () => {
     setExistingImages(existing.images || []);
     setConsentRequired(existing.consentRequired ?? false);
     setRulesAndRegulations(existing.rulesAndRegulations ?? '');
-    setConsentStart(existing.consentStartTime ? existing.consentStartTime.slice(0, 16) : '');
-    setConsentEnd(existing.consentEndTime ? existing.consentEndTime.slice(0, 16) : '');
+    setConsentStartDate(existing.consentStartTime ? existing.consentStartTime.slice(0, 10) : '');
+    setConsentStartTime(existing.consentStartTime ? existing.consentStartTime.slice(11, 16) : '12:00');
+    setConsentEndDate(existing.consentEndTime ? existing.consentEndTime.slice(0, 10) : '');
+    setConsentEndTime(existing.consentEndTime ? existing.consentEndTime.slice(11, 16) : '12:00');
   }, [existing?.id]);
 
   const totalImages = existingImages.length + pendingImages.length;
@@ -727,19 +762,55 @@ const AddEditProduct = () => {
                   {consentRequired && (
                     <div className="space-y-4 animate-fade-in">
                       <div className="space-y-1.5">
-                        <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Rules &amp; Regulations *</Label>
-                        <textarea value={rulesAndRegulations} onChange={e => setRulesAndRegulations(e.target.value)} rows={6} maxLength={10000}
-                          placeholder="E.g. All bids are final. Payment within 48 hours. Winner is responsible for shipping costs..."
-                          className="w-full rounded-xl border border-border bg-muted/40 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/30" />
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="space-y-1.5">
-                          <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Consent Window Start *</Label>
-                          <Input type="datetime-local" value={consentStart} onChange={e => setConsentStart(e.target.value)} className="h-10" />
+                        <div className="flex items-center justify-between gap-2">
+                          <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Rules &amp; Regulations *</Label>
+                          <button
+                            type="button"
+                            onClick={() => setRulesAndRegulations(RULES_TEMPLATE)}
+                            className="text-xs font-medium text-primary hover:underline"
+                          >
+                            Use template
+                          </button>
                         </div>
-                        <div className="space-y-1.5">
-                          <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Consent Window End *</Label>
-                          <Input type="datetime-local" value={consentEnd} onChange={e => setConsentEnd(e.target.value)} className="h-10" />
+                        <textarea value={rulesAndRegulations} onChange={e => setRulesAndRegulations(e.target.value)} rows={12} maxLength={10000}
+                          placeholder={RULES_TEMPLATE}
+                          className="w-full rounded-xl border border-border bg-muted/40 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/30 whitespace-pre-wrap" />
+                        <p className="text-xs text-muted-foreground">Tip: Click "Use template" to load a starter format, then edit the details to match your auction.</p>
+                      </div>
+                      <div className="space-y-3">
+                        <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Consent Window Start *</Label>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1.5">
+                            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1"><CalendarIcon className="h-3 w-3" /> Date *</Label>
+                            <Input type="date" value={consentStartDate} onChange={e => setConsentStartDate(e.target.value)} min={getMinDate()} max={getMaxDate()} className="font-mono h-10" />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1"><ClockIcon className="h-3 w-3" /> Time *</Label>
+                            <Select value={consentStartTime} onValueChange={setConsentStartTime}>
+                              <SelectTrigger className="font-mono h-10"><SelectValue /></SelectTrigger>
+                              <SelectContent className="max-h-52">
+                                {timeSlots.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="space-y-3">
+                        <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Consent Window End *</Label>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1.5">
+                            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1"><CalendarIcon className="h-3 w-3" /> Date *</Label>
+                            <Input type="date" value={consentEndDate} onChange={e => setConsentEndDate(e.target.value)} min={getMinDate()} max={getMaxDate()} className="font-mono h-10" />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1"><ClockIcon className="h-3 w-3" /> Time *</Label>
+                            <Select value={consentEndTime} onValueChange={setConsentEndTime}>
+                              <SelectTrigger className="font-mono h-10"><SelectValue /></SelectTrigger>
+                              <SelectContent className="max-h-52">
+                                {timeSlots.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
+                              </SelectContent>
+                            </Select>
+                          </div>
                         </div>
                       </div>
                       <p className="text-xs text-muted-foreground">Consent window and auction duration are independent. Auction duration: 1–24 hours.</p>
